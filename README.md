@@ -43,11 +43,18 @@ openapi-python-client generate \
   --config config.yml
 ```
 
-Or use the provided script (supports optional branch checkout):
+Or use the provided script:
 
 ```bash
-./regen_sdk.sh                              # uses current platform branch
-./regen_sdk.sh feat/axim-api_improvements   # checkout branch first, then regenerate
+# Regenerate from a running Studio (no platform repo needed)
+./regen_sdk.sh
+
+# Checkout a specific branch first, then regenerate
+# PLATFORM_DIR defaults to ../openedx-platform — override if your checkout is elsewhere
+PLATFORM_DIR=/path/to/openedx-platform ./regen_sdk.sh feat/axim-api_improvements
+
+# Use a different Studio URL
+STUDIO_URL=http://studio.example.com:8001 ./regen_sdk.sh
 ```
 
 ---
@@ -66,7 +73,7 @@ auth = OAuth2ClientCredentials(
 )
 
 # Get a ready-to-use authenticated client (token fetched automatically)
-with auth.get_client(studio_url="http://localhost:18010/api/contentstore") as client:
+with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/contentstore") as client:
     from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_list
     result = v3_home_list.sync(client=client)
 ```
@@ -134,6 +141,52 @@ with client as client:
     print(response.status_code)
     print(response.parsed)
 ```
+
+---
+
+## Testing Locally
+
+### Prerequisites
+
+- A running [devstack](https://github.com/openedx/devstack) or Tutor instance
+- Default URLs: LMS at `http://local.openedx.io:8000`, Studio at `http://studio.local.openedx.io:8001`
+
+### 1. Install the SDK
+
+```bash
+cd openedx-platform-sdk
+pip install -e .
+```
+
+### 2. Create an OAuth2 application in LMS
+
+1. Go to `http://local.openedx.io:8000/admin/oauth2_provider/application/`
+2. Click **Add Application**
+3. Fill in:
+   - **User**: any staff/admin user (required for JWT issuance)
+   - **Client type**: Confidential
+   - **Authorization grant type**: Client credentials
+   - **Name**: `openedx-platform-sdk`
+4. Save and copy the generated **Client ID** and **Client Secret**
+
+### 3. Run a quick test
+
+```python
+from openedx_platform_sdk import OAuth2ClientCredentials
+
+auth = OAuth2ClientCredentials(
+    lms_url="http://local.openedx.io:8000",
+    client_id="your-client-id",
+    client_secret="your-client-secret",
+)
+
+with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/contentstore") as client:
+    r = client.get_httpx_client().request("GET", "/v3/home/")
+    print(r.status_code)   # 200
+    print(r.json())
+```
+
+> **Note:** The `studio_url` must include `/api/contentstore` — the SDK appends versioned paths (e.g. `/v3/home/`) directly to this base.
 
 ---
 
