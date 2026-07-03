@@ -5,7 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.course_home_tab_serializer_v2 import CourseHomeTabSerializerV2
+from ...models.paginated_v4_home_courses_response import PaginatedV4HomeCoursesResponse
 from ...types import UNSET, Response, Unset
 
 
@@ -52,14 +52,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | list[CourseHomeTabSerializerV2] | None:
+) -> Any | PaginatedV4HomeCoursesResponse | None:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-            response_200_item = CourseHomeTabSerializerV2.from_dict(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = PaginatedV4HomeCoursesResponse.from_dict(response.json())
 
         return response_200
 
@@ -75,7 +70,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | list[CourseHomeTabSerializerV2]]:
+) -> Response[Any | PaginatedV4HomeCoursesResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -95,7 +90,7 @@ def sync_detailed(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     search: str | Unset = UNSET,
-) -> Response[Any | list[CourseHomeTabSerializerV2]]:
+) -> Response[Any | PaginatedV4HomeCoursesResponse]:
     """List courses for the Studio home page (paginated)
 
      Returns a paginated list of all courses available to the logged-in user, with optional filtering and
@@ -116,7 +111,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | list[CourseHomeTabSerializerV2]]
+        Response[Any | PaginatedV4HomeCoursesResponse]
     """
 
     kwargs = _get_kwargs(
@@ -148,7 +143,7 @@ def sync(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     search: str | Unset = UNSET,
-) -> Any | list[CourseHomeTabSerializerV2] | None:
+) -> Any | PaginatedV4HomeCoursesResponse | None:
     """List courses for the Studio home page (paginated)
 
      Returns a paginated list of all courses available to the logged-in user, with optional filtering and
@@ -169,7 +164,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | list[CourseHomeTabSerializerV2]
+        Any | PaginatedV4HomeCoursesResponse
     """
 
     return sync_detailed(
@@ -196,7 +191,7 @@ async def asyncio_detailed(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     search: str | Unset = UNSET,
-) -> Response[Any | list[CourseHomeTabSerializerV2]]:
+) -> Response[Any | PaginatedV4HomeCoursesResponse]:
     """List courses for the Studio home page (paginated)
 
      Returns a paginated list of all courses available to the logged-in user, with optional filtering and
@@ -217,7 +212,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | list[CourseHomeTabSerializerV2]]
+        Response[Any | PaginatedV4HomeCoursesResponse]
     """
 
     kwargs = _get_kwargs(
@@ -247,7 +242,7 @@ async def asyncio(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     search: str | Unset = UNSET,
-) -> Any | list[CourseHomeTabSerializerV2] | None:
+) -> Any | PaginatedV4HomeCoursesResponse | None:
     """List courses for the Studio home page (paginated)
 
      Returns a paginated list of all courses available to the logged-in user, with optional filtering and
@@ -268,7 +263,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | list[CourseHomeTabSerializerV2]
+        Any | PaginatedV4HomeCoursesResponse
     """
 
     return (

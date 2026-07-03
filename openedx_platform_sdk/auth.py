@@ -103,11 +103,14 @@ class OAuth2ClientCredentials:
             verify_ssl: Override SSL verification for the Studio client
             **kwargs: Additional arguments forwarded to AuthenticatedClient
         """
+        headers = kwargs.pop("headers", {})
+        headers.setdefault("Accept", "application/json")
         return AuthenticatedClient(
             base_url=studio_url.rstrip("/"),
             token=self.get_token(),
             prefix="JWT",
             raise_on_unexpected_status=raise_on_unexpected_status,
             verify_ssl=verify_ssl if verify_ssl is not None else self.verify_ssl,
+            headers=headers,
             **kwargs,
         )

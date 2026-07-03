@@ -33,16 +33,6 @@ def _get_kwargs(
             _kwargs["json"] = body.to_dict()
 
         headers["Content-Type"] = "application/json"
-    if isinstance(body, PatchedauthoringGradingCourseGradingV0):
-        if not isinstance(body, Unset):
-            _kwargs["data"] = body.to_dict()
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-    if isinstance(body, PatchedauthoringGradingCourseGradingV0):
-        if not isinstance(body, Unset):
-            _kwargs["files"] = body.to_multipart()
-
-        headers["Content-Type"] = "multipart/form-data; boundary=+++"
-
     _kwargs["headers"] = headers
     return _kwargs
 

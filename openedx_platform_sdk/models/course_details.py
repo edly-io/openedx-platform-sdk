@@ -25,7 +25,7 @@ class CourseDetails:
         about_sidebar_html (None | str):
         banner_image_name (str):
         banner_image_asset_path (str):
-        certificate_available_date (datetime.datetime):
+        certificate_available_date (datetime.datetime | None):
         certificates_display_behavior (None | str):
         course_id (str):
         course_image_asset_path (str):
@@ -62,7 +62,7 @@ class CourseDetails:
     about_sidebar_html: None | str
     banner_image_name: str
     banner_image_asset_path: str
-    certificate_available_date: datetime.datetime
+    certificate_available_date: datetime.datetime | None
     certificates_display_behavior: None | str
     course_id: str
     course_image_asset_path: str
@@ -104,7 +104,11 @@ class CourseDetails:
 
         banner_image_asset_path = self.banner_image_asset_path
 
-        certificate_available_date = self.certificate_available_date.isoformat()
+        certificate_available_date: None | str
+        if isinstance(self.certificate_available_date, datetime.datetime):
+            certificate_available_date = self.certificate_available_date.isoformat()
+        else:
+            certificate_available_date = self.certificate_available_date
 
         certificates_display_behavior: None | str
         certificates_display_behavior = self.certificates_display_behavior
@@ -242,9 +246,17 @@ class CourseDetails:
 
         files.append(("banner_image_asset_path", (None, str(self.banner_image_asset_path).encode(), "text/plain")))
 
-        files.append(
-            ("certificate_available_date", (None, self.certificate_available_date.isoformat().encode(), "text/plain"))
-        )
+        if isinstance(self.certificate_available_date, datetime.datetime):
+            files.append(
+                (
+                    "certificate_available_date",
+                    (None, self.certificate_available_date.isoformat().encode(), "text/plain"),
+                )
+            )
+        else:
+            files.append(
+                ("certificate_available_date", (None, str(self.certificate_available_date).encode(), "text/plain"))
+            )
 
         if isinstance(self.certificates_display_behavior, str):
             files.append(
@@ -385,7 +397,20 @@ class CourseDetails:
 
         banner_image_asset_path = d.pop("banner_image_asset_path")
 
-        certificate_available_date = datetime.datetime.fromisoformat(d.pop("certificate_available_date"))
+        def _parse_certificate_available_date(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                certificate_available_date_type_0 = datetime.datetime.fromisoformat(data)
+
+                return certificate_available_date_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
+
+        certificate_available_date = _parse_certificate_available_date(d.pop("certificate_available_date"))
 
         def _parse_certificates_display_behavior(data: object) -> None | str:
             if data is None:

@@ -74,8 +74,8 @@ auth = OAuth2ClientCredentials(
 
 # Get a ready-to-use authenticated client (token fetched automatically)
 with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/contentstore") as client:
-    from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_list
-    result = v3_home_list.sync(client=client)
+    from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
+    result = v3_home_retrieve.sync(client=client)
 ```
 
 Token is cached and auto-refreshed 60 seconds before expiry. The `JWT` prefix is used automatically (required by OpenedX).
@@ -99,13 +99,13 @@ client = AuthenticatedClient(
 ### Call an endpoint
 
 ```python
-from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_list
+from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
 from openedx_platform_sdk.api.openedx_platform_sdk import v3_course_details_retrieve
-from openedx_platform_sdk.api.openedx_platform_sdk import v4_home_courses_list
+from openedx_platform_sdk.api.openedx_platform_sdk import v4_home_courses_retrieve
 
 with client as client:
     # Get studio home
-    home = v3_home_list.sync(client=client)
+    home = v3_home_retrieve.sync(client=client)
 
     # Get course details
     details = v3_course_details_retrieve.sync(
@@ -114,18 +114,18 @@ with client as client:
     )
 
     # Get paginated courses (v4)
-    courses = v4_home_courses_list.sync(client=client, page=1, page_size=20)
+    courses = v4_home_courses_retrieve.sync(client=client)
 ```
 
 ### Async support
 
 ```python
 import asyncio
-from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_list
+from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
 
 async def main():
     async with client as c:
-        home = await v3_home_list.asyncio(client=c)
+        home = await v3_home_retrieve.asyncio(client=c)
 
 asyncio.run(main())
 ```
@@ -133,11 +133,11 @@ asyncio.run(main())
 ### Detailed response (status code, headers)
 
 ```python
-from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_list
+from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
 from openedx_platform_sdk.types import Response
 
 with client as client:
-    response: Response = v3_home_list.sync_detailed(client=client)
+    response: Response = v3_home_retrieve.sync_detailed(client=client)
     print(response.status_code)
     print(response.parsed)
 ```
@@ -173,6 +173,7 @@ pip install -e .
 
 ```python
 from openedx_platform_sdk import OAuth2ClientCredentials
+from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
 
 auth = OAuth2ClientCredentials(
     lms_url="http://local.openedx.io:8000",
@@ -181,12 +182,14 @@ auth = OAuth2ClientCredentials(
 )
 
 with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/contentstore") as client:
-    r = client.get_httpx_client().request("GET", "/v3/home/")
-    print(r.status_code)   # 200
-    print(r.json())
+    home = v3_home_retrieve.sync(client=client)
+    print(home.studio_name)
+    print(home.courses)
 ```
 
 > **Note:** The `studio_url` must include `/api/contentstore` — the SDK appends versioned paths (e.g. `/v3/home/`) directly to this base.
+
+For typed usage examples covering all API groups (Home v3/v4, Course Details, Authoring Grading, XBlock lifecycle), see **[docs/testing-sdk-apis.rst](docs/testing-sdk-apis.rst)**.
 
 ---
 
