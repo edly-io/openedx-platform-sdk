@@ -51,7 +51,7 @@ class AuthoringGradingCourseGradingV0:
 
         grade_cutoffs: dict[str, Any] | Unset = UNSET
         if not isinstance(self.grade_cutoffs, Unset):
-            grade_cutoffs = self.grade_cutoffs.to_dict()
+            grade_cutoffs = self.grade_cutoffs.to_dict() if not isinstance(self.grade_cutoffs, dict) else dict(self.grade_cutoffs)
 
         grace_period: dict[str, Any] | None | Unset
         if isinstance(self.grace_period, Unset):

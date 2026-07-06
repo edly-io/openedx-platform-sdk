@@ -2,7 +2,7 @@
 
 A Python client library for the [OpenedX Authoring API](https://docs.openedx.org), auto-generated from the platform's OpenAPI schema using [openapi-python-client](https://github.com/openapi-generators/openapi-python-client).
 
-Covers the standardized v1/v3/v4 APIs tagged `openedx-platform-sdk` in the platform.
+Covers the standardized v1/v3/v4 Studio APIs and LMS Enrollment v2 APIs tagged `openedx-platform-sdk` in the platform.
 
 ---
 
@@ -15,6 +15,7 @@ Covers the standardized v1/v3/v4 APIs tagged `openedx-platform-sdk` in the platf
 | Course Details | v3 | retrieve, update |
 | Home | v3 | list, courses, libraries |
 | Home (paginated) | v4 | courses |
+| Enrollment | v2 | list, retrieve, create, enrollment_allowed, enrollments, roles, course |
 
 ---
 
@@ -30,31 +31,18 @@ pip install openapi-python-client pyyaml
 
 ### Steps
 
-```bash
-# 1. Download the schema from a running Studio instance
-curl http://studio.local.openedx.io:8001/authoring-api/schema/ > schema.yml
-
-# 2. Filter schema to only openedx-platform-sdk tagged paths
-python filter_schema.py schema.yml filtered_schema.yml openedx-platform-sdk
-
-# 3. Regenerate the SDK
-openapi-python-client generate \
-  --path filtered_schema.yml \
-  --config config.yml
-```
-
-Or use the provided script:
+Use the provided script — it downloads schemas from both Studio and LMS, merges them, and regenerates the SDK:
 
 ```bash
-# Regenerate from a running Studio (no platform repo needed)
+# Regenerate from running Studio + LMS instances
 ./regen_sdk.sh
 
 # Checkout a specific branch first, then regenerate
 # PLATFORM_DIR defaults to ../openedx-platform — override if your checkout is elsewhere
 PLATFORM_DIR=/path/to/openedx-platform ./regen_sdk.sh feat/axim-api_improvements
 
-# Use a different Studio URL
-STUDIO_URL=http://studio.example.com:8001 ./regen_sdk.sh
+# Use different URLs
+STUDIO_URL=http://studio.example.com:8001 LMS_URL=http://lms.example.com:8000 ./regen_sdk.sh
 ```
 
 ---
@@ -188,8 +176,10 @@ with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/content
 ```
 
 > **Note:** The `studio_url` must include `/api/contentstore` — the SDK appends versioned paths (e.g. `/v3/home/`) directly to this base.
+>
+> For Enrollment v2 APIs, use `http://local.openedx.io:8000/api/enrollment` as the base URL instead — enrollment endpoints live on LMS, not Studio.
 
-For typed usage examples covering all API groups (Home v3/v4, Course Details, Authoring Grading, XBlock lifecycle), see **[docs/testing-sdk-apis.rst](docs/testing-sdk-apis.rst)**.
+For typed usage examples covering all API groups (Home v3/v4, Course Details, Authoring Grading, XBlock lifecycle, Enrollment v2), see **[docs/testing-sdk-apis.rst](docs/testing-sdk-apis.rst)**.
 
 ---
 

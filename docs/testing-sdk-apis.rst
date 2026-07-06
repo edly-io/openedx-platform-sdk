@@ -326,24 +326,105 @@ Full XBlock lifecycle (create → rename → delete)
 
 ----
 
-Running the Integration Test Suite
-------------------------------------
+Enrollment v2
+-------------
 
-A ready-made integration test script covering all of the above is located at the repo root:
+.. note::
 
-.. code-block:: bash
+   Enrollment APIs live in LMS (``openedx.core.djangoapps.enrollments``).
+   The SDK schema is generated from both Studio and LMS and merged at build time.
 
-    cd /path/to/nightly
-    pip install -e openedx-platform-sdk/
-    python test_sdk.py
+   **At runtime, the enrollment client must target the LMS enrollment base URL, not Studio.**
 
-Expected output (all 27 checks green)::
+.. code-block:: python
 
-    ─── Home v3 ───
-    [PASS] v3_home_retrieve returns a result
-    [PASS] v3_home_retrieve has studio_name
-    [PASS] v3_home_retrieve has courses list
-    [PASS] v3_home_courses_retrieve returns a result
-    ...
-    Results: 27/27 tests passed
-    All tests passed!
+    LMS_ENROLLMENT_URL = "http://local.openedx.io:8000/api/enrollment"
+
+    # Use a separate client pointed at LMS
+    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+        ...
+
+List enrollments for the authenticated user
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollment_list
+
+    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+        result = v2_enrollment_list.sync(client=enroll_client)
+        print(result.count)
+        for enrollment in result.results:
+            print(enrollment.is_active, enrollment.mode)
+
+Get course enrollment details
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from openedx_platform_sdk.api.openedx_platform_sdk import v2_course_retrieve
+
+    COURSE_KEY = "course-v1:org+course+run"
+
+    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+        course = v2_course_retrieve.sync(course_id=COURSE_KEY, client=enroll_client)
+        print(course.course_id)
+        print(course.invite_only)
+
+Get user roles
+~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from openedx_platform_sdk.api.openedx_platform_sdk import v2_roles_retrieve
+
+    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+        roles = v2_roles_retrieve.sync(client=enroll_client)
+        print(roles.roles)
+
+Admin enrollment list
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollments_list
+
+    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+        result = v2_enrollments_list.sync(client=enroll_client, course_id=COURSE_KEY)
+        for item in result.results:
+            print(item.user, item.mode, item.is_active)
+
+Enroll and retrieve
+~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import datetime
+    from openedx_platform_sdk.api.openedx_platform_sdk import (
+        v2_enrollment_create,
+        v2_enrollment_retrieve,
+    )
+    from openedx_platform_sdk.models.course_enrollment import CourseEnrollment
+    from openedx_platform_sdk.models.enrollment_course import EnrollmentCourse
+
+    epoch = datetime.datetime(2024, 1, 1)
+    body = CourseEnrollment(
+        created=None,
+        user="",   # empty → LMS uses the OAuth2 service account's own user
+        mode="audit",
+        course_details=EnrollmentCourse(
+            course_id=COURSE_KEY, course_name="", invite_only=False,
+            course_modes="", pacing_type="",
+            enrollment_start=epoch, enrollment_end=epoch,
+            course_start=epoch, course_end=epoch,
+        ),
+    )
+
+    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+        resp = v2_enrollment_create.sync_detailed(client=enroll_client, body=body)
+        print(resp.status_code.value)   # 200
+
+        enrollment = v2_enrollment_retrieve.sync(
+            client=enroll_client, username="your-lms-username", course_id=COURSE_KEY
+        )
+        print(enrollment.is_active)     # True

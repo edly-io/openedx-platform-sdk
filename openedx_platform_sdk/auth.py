@@ -24,7 +24,6 @@ Usage:
 """
 
 import time
-from typing import Optional
 
 import httpx
 
@@ -61,7 +60,7 @@ class OAuth2ClientCredentials:
         self.refresh_buffer_seconds = refresh_buffer_seconds
         self.verify_ssl = verify_ssl
 
-        self._token: Optional[str] = None
+        self._token: str | None = None
         self._expires_at: float = 0.0
 
     def _fetch_token(self) -> None:
@@ -91,7 +90,7 @@ class OAuth2ClientCredentials:
         self,
         studio_url: str,
         raise_on_unexpected_status: bool = False,
-        verify_ssl: Optional[bool] = None,
+        verify_ssl: bool | None = None,
         **kwargs,
     ) -> AuthenticatedClient:
         """

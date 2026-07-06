@@ -526,7 +526,8 @@ class CourseDetails:
 
         short_description = d.pop("short_description")
 
-        start_date = datetime.datetime.fromisoformat(d.pop("start_date"))
+        _raw_start_date = d.pop("start_date")
+        start_date = datetime.datetime.fromisoformat(_raw_start_date) if isinstance(_raw_start_date, str) else None
 
         subtitle = d.pop("subtitle")
 

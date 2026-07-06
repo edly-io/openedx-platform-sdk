@@ -7,12 +7,19 @@ from .authoring_grading_graders_v0 import AuthoringGradingGradersV0
 from .course_common import CourseCommon
 from .course_common_serializer_v2 import CourseCommonSerializerV2
 from .course_details import CourseDetails
+from .course_enrollment import CourseEnrollment
+from .course_enrollment_allowed import CourseEnrollmentAllowed
+from .course_enrollments_api_list import CourseEnrollmentsApiList
 from .course_home_tab import CourseHomeTab
 from .course_home_tab_serializer_v2 import CourseHomeTabSerializerV2
+from .enrollment_course import EnrollmentCourse
 from .instructor_info import InstructorInfo
 from .instructors import Instructors
 from .library_tab import LibraryTab
 from .library_view import LibraryView
+from .paginated_course_enrollment_allowed_list import PaginatedCourseEnrollmentAllowedList
+from .paginated_course_enrollment_list import PaginatedCourseEnrollmentList
+from .paginated_course_enrollments_api_list_list import PaginatedCourseEnrollmentsApiListList
 from .paginated_v4_home_courses_response import PaginatedV4HomeCoursesResponse
 from .patched_xblock import PatchedXblock
 from .patched_xblock_actions_type_0 import PatchedXblockActionsType0
@@ -26,7 +33,13 @@ from .publish_enum import PublishEnum
 from .studio_home import StudioHome
 from .unsucceeded_course import UnsucceededCourse
 from .unsucceeded_course_serializer_v2 import UnsucceededCourseSerializerV2
+from .user_role import UserRole
+from .user_roles_response import UserRolesResponse
 from .v1_xblock_retrieve_view import V1XblockRetrieveView
+from .v2_enrollment_list_view import V2EnrollmentListView
+from .v2_enrollment_unenroll_create_data_body import V2EnrollmentUnenrollCreateDataBody
+from .v2_enrollment_unenroll_create_files_body import V2EnrollmentUnenrollCreateFilesBody
+from .v2_enrollment_unenroll_create_json_body import V2EnrollmentUnenrollCreateJsonBody
 from .v3_course_details_retrieve_view import V3CourseDetailsRetrieveView
 from .xblock import Xblock
 from .xblock_actions_type_0 import XblockActionsType0
@@ -43,12 +56,19 @@ __all__ = (
     "CourseCommon",
     "CourseCommonSerializerV2",
     "CourseDetails",
+    "CourseEnrollment",
+    "CourseEnrollmentAllowed",
+    "CourseEnrollmentsApiList",
     "CourseHomeTab",
     "CourseHomeTabSerializerV2",
+    "EnrollmentCourse",
     "InstructorInfo",
     "Instructors",
     "LibraryTab",
     "LibraryView",
+    "PaginatedCourseEnrollmentAllowedList",
+    "PaginatedCourseEnrollmentList",
+    "PaginatedCourseEnrollmentsApiListList",
     "PaginatedV4HomeCoursesResponse",
     "PatchedauthoringGradingCourseGradingV0",
     "PatchedauthoringGradingCourseGradingV0GradeCutoffs",
@@ -62,7 +82,13 @@ __all__ = (
     "StudioHome",
     "UnsucceededCourse",
     "UnsucceededCourseSerializerV2",
+    "UserRole",
+    "UserRolesResponse",
     "V1XblockRetrieveView",
+    "V2EnrollmentListView",
+    "V2EnrollmentUnenrollCreateDataBody",
+    "V2EnrollmentUnenrollCreateFilesBody",
+    "V2EnrollmentUnenrollCreateJsonBody",
     "V3CourseDetailsRetrieveView",
     "Xblock",
     "XblockActionsType0",

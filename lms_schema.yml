@@ -1,0 +1,1032 @@
+openapi: 3.0.3
+info:
+  title: LMS Enrollment API
+  version: 0.1.0
+paths:
+  /v1/course/{course_id}:
+    get:
+      operationId: v1_course_retrieve
+      description: |-
+        Read enrollment information for a particular course.
+
+        HTTP Endpoint for retrieving course level enrollment information.
+
+        Args:
+            request (Request): To get current course enrollment information, a GET request will return
+                information for the specified course.
+            course_id (str): URI element specifying the course location. Enrollment information will be
+                returned.
+
+        Return:
+            A JSON serialized representation of the course enrollment details.
+      parameters:
+      - in: path
+        name: course_id
+        schema:
+          type: string
+          pattern: ^[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+$
+        required: true
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /v1/enrollment:
+    get:
+      operationId: v1_enrollment_retrieve
+      description: |-
+        Gets a list of all course enrollments for a user.
+
+        Returns a list for the currently logged in user, or for the user named by the 'user' GET
+        parameter. If the username does not match that of the currently logged in user, only
+        courses for which the currently logged in user has the Staff or Admin role are listed.
+        As a result, a course team member can find out which of their own courses a particular
+        learner is enrolled in.
+
+        Only the Staff or Admin role (granted on the Django administrative console as the staff
+        or instructor permission) in individual courses gives the requesting user access to
+        enrollment data. Permissions granted at the organizational level do not give a user
+        access to enrollment data for all of that organization's courses.
+
+        Users who have the global staff permission can access all enrollment data for all
+        courses.
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: v1_enrollment_create
+      description: |-
+        Enrolls the currently logged-in user in a course.
+
+        Server-to-server calls may deactivate or modify the mode of existing enrollments. All other requests
+        go through `add_enrollment()`, which allows creation of new and reactivation of old enrollments.
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /v1/enrollment/{course_id}:
+    get:
+      operationId: v1_enrollment_retrieve_2
+      description: |-
+        Create, read, or update enrollment information for a user.
+
+        HTTP Endpoint for all CRUD operations for a user course enrollment. Allows creation, reading, and
+        updates of the current enrollment for a particular course.
+
+        Args:
+            request (Request): To get current course enrollment information, a GET request will return
+                information for the current user and the specified course.
+            course_id (str): URI element specifying the course location. Enrollment information will be
+                returned, created, or updated for this particular course.
+            username (str): The username associated with this enrollment request.
+
+        Return:
+            A JSON serialized representation of the course enrollment.
+      parameters:
+      - in: path
+        name: course_id
+        schema:
+          type: string
+          pattern: ^[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+$
+        required: true
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /v1/enrollment/{username},{course_id}:
+    get:
+      operationId: v1_enrollment_,_retrieve
+      description: |-
+        Create, read, or update enrollment information for a user.
+
+        HTTP Endpoint for all CRUD operations for a user course enrollment. Allows creation, reading, and
+        updates of the current enrollment for a particular course.
+
+        Args:
+            request (Request): To get current course enrollment information, a GET request will return
+                information for the current user and the specified course.
+            course_id (str): URI element specifying the course location. Enrollment information will be
+                returned, created, or updated for this particular course.
+            username (str): The username associated with this enrollment request.
+
+        Return:
+            A JSON serialized representation of the course enrollment.
+      parameters:
+      - in: path
+        name: course_id
+        schema:
+          type: string
+          pattern: ^[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+$
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+          pattern: ^[\w .@_+-]+$
+        required: true
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /v1/enrollment_allowed/:
+    get:
+      operationId: v1_enrollment_allowed_retrieve
+      description: |-
+        Returns the enrollments allowed for a given user email.
+
+        **Example Requests**
+
+        GET /api/enrollment/v1/enrollment_allowed?email=user@example.com
+
+        **Parameters**
+
+        - `email` (optional, string, _query_params_) - defaults to the calling user if not provided.
+
+        **Responses**
+        - 200: Success.
+        - 403: Forbidden, you need to be staff.
+      tags:
+      - v1
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          description: ''
+    post:
+      operationId: v1_enrollment_allowed_create
+      description: |-
+        Creates an enrollment allowed for a given user email and course id.
+
+        **Example Request**
+
+        POST /api/enrollment/v1/enrollment_allowed/
+
+        Note: The URL for this request must finish with /
+
+        Example request data:
+        ```
+        {
+            "email": "user@example.com",
+            "course_id": "course-v1:edX+DemoX+Demo_Course",
+            "auto_enroll": true
+        }
+        ```
+
+        **Parameters**
+
+        - `email` (**required**, string, _body_)
+
+        - `course_id` (**required**, string, _body_)
+
+        - `auto_enroll` (optional, bool: default=false, _body_)
+
+        **Responses**
+        - 400: Bad request, missing data.
+        - 403: Forbidden, you need to be staff.
+        - 409: Conflict, enrollment allowed already exists.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollmentAllowed'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          description: ''
+    delete:
+      operationId: v1_enrollment_allowed_destroy
+      description: |-
+        Deletes an enrollment allowed for a given user email and course id.
+
+        **Example Request**
+
+        DELETE /api/enrollment/v1/enrollment_allowed/
+
+        Note: The URL for this request must finish with /
+
+        Example request data:
+        ```
+        {
+            "email": "user@example.com",
+            "course_id": "course-v1:edX+DemoX+Demo_Course"
+        }
+        ```
+
+        **Parameters**
+
+        - `email` (**required**, string, _body_)
+
+        - `course_id` (**required**, string, _body_)
+
+        **Responses**
+        - 204: Enrollment allowed deleted.
+        - 400: Bad request, missing data.
+        - 403: Forbidden, you need to be staff.
+        - 404: Not found, the course enrollment allowed doesn't exists.
+      tags:
+      - v1
+      responses:
+        '204':
+          description: No response body
+  /v1/enrollments/:
+    get:
+      operationId: v1_enrollments_list
+      description: |-
+        **Use Cases**
+
+            Get a list of all course enrollments, optionally filtered by a course ID or list of usernames.
+
+        **Example Requests**
+
+            GET /api/enrollment/v1/enrollments
+
+            GET /api/enrollment/v1/enrollments?course_id={course_id}
+
+            GET /api/enrollment/v1/enrollments?course_ids={course_id},{course_id},{course_id}
+
+            GET /api/enrollment/v1/enrollments?username={username},{username},{username}
+
+            GET /api/enrollment/v1/enrollments?course_id={course_id}&username={username}
+
+            GET /api/enrollment/v1/enrollments?email={email},{email}
+
+        **Query Parameters for GET**
+
+            * course_id: Filters the result to course enrollments for the course corresponding to the
+              given course ID. The value must be URL encoded. Optional.
+
+            * course_ids: List of comma-separated course IDs. Filters the result to course enrollments
+              for the courses corresponding to the given course IDs. Course IDs could be course run IDs
+              or course IDs. The value must be URL encoded. Optional.
+
+            * username: List of comma-separated usernames. Filters the result to the course enrollments
+              of the given users. Optional.
+
+            * email: List of comma-separated emails. Filters the result to the course enrollments
+              of the given users. Optional.
+
+            * page_size: Number of results to return per page. Optional.
+
+            * page: Page number to retrieve. Optional.
+
+        **Response Values**
+
+            If the request for information about the course enrollments is successful, an HTTP 200 "OK" response
+            is returned.
+
+            The HTTP 200 response has the following values.
+
+            * results: A list of the course enrollments matching the request.
+
+                * created: Date and time when the course enrollment was created.
+
+                * mode: Mode for the course enrollment.
+
+                * is_active: Whether the course enrollment is active or not.
+
+                * user: Username of the user in the course enrollment.
+
+                * course_id: Course ID of the course in the course enrollment.
+
+            * next: The URL to the next page of results, or null if this is the
+              last page.
+
+            * previous: The URL to the next page of results, or null if this
+              is the first page.
+
+            If the user is not logged in, a 401 error is returned.
+
+            If the user is not global staff, a 403 error is returned.
+
+            If the specified course_id is not valid or any of the specified usernames
+            are not valid, a 400 error is returned.
+
+            If the specified course_id does not correspond to a valid course or if all the specified
+            usernames do not correspond to valid users, an HTTP 200 "OK" response is returned with an
+            empty 'results' field.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - v1
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseEnrollmentsApiListList'
+          description: ''
+  /v1/roles/:
+    get:
+      operationId: v1_roles_retrieve
+      description: Gets a list of all roles for the currently logged-in user, filtered
+        by course_id if supplied
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /v1/unenroll/:
+    post:
+      operationId: v1_unenroll_create
+      description: Unenrolls the specified user from all courses.
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /v2/course/{course_id}:
+    get:
+      operationId: v2_course_retrieve
+      description: Returns the course schedule and supported enrollment modes. No
+        authentication required. Use ?include_expired=1 to include expired enrollment
+        modes.
+      summary: Get enrollment details for a course
+      parameters:
+      - in: path
+        name: course_id
+        schema:
+          type: string
+        description: Course ID (e.g. course-v1:org+course+run).
+        required: true
+      - in: query
+        name: include_expired
+        schema:
+          type: string
+        description: If '1', include expired enrollment modes in the response.
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/enrollment.Course'
+          description: Course enrollment details retrieved successfully.
+        '400':
+          description: Invalid request data or parameters.
+        '404':
+          description: The requested resource does not exist.
+  /v2/enrollment/:
+    get:
+      operationId: v2_enrollment_list
+      description: Returns a paginated list of enrollments for the currently logged-in
+        user, or for the user named by the 'user' query parameter. Staff/admin/api-key
+        access is required to view another user's enrollments — otherwise the list
+        is filtered to courses the requester staffs. Supports the ADR 0036 ``?view=minimal``
+        preset (see parameter description).
+      summary: List enrollments for a user (paginated)
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: string
+        description: Page number to retrieve. Default 1.
+      - in: query
+        name: page_size
+        schema:
+          type: string
+        description: Items per page (default 10, max 100).
+      - in: query
+        name: user
+        schema:
+          type: string
+        description: Username of the user whose enrollments to list.
+      - in: query
+        name: view
+        schema:
+          type: string
+          enum:
+          - minimal
+        description: ADR 0036 response preset. ``minimal`` collapses the embedded
+          ``course_details`` sub-object on each enrollment to a single ``course_id``
+          string (drops ``course_modes`` and other heavy course-detail fields). Omit
+          the parameter to receive the full response.
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseEnrollmentList'
+          description: Paginated enrollment list. The schema below is the full default
+            shape; when ``?view=minimal`` is supplied each enrollment's ``course_details``
+            is collapsed to a single ``course_id`` string (ADR 0036).
+        '401':
+          description: The requester is not authenticated.
+    post:
+      operationId: v2_enrollment_create
+      description: Enrolls a user in a course. Server-to-server calls may deactivate
+        or modify the mode of existing enrollments; all other requests create or reactivate
+        enrollments. The request body must include course_details.course_id.
+      summary: Create or update an enrollment
+      tags:
+      - openedx-platform-sdk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollment'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollment'
+          description: Enrollment created, reactivated, or updated successfully.
+        '400':
+          description: Invalid request data or parameters.
+        '403':
+          description: The requester does not have permission for this operation.
+        '404':
+          description: The requested resource does not exist.
+  /v2/enrollment/{course_id}:
+    get:
+      operationId: v2_enrollment_retrieve
+      description: Returns the current user's enrollment for the specified course,
+        or the named user's enrollment when invoked with the {username},{course_id}
+        URL form (server-to-server or staff only).
+      summary: Retrieve a user's enrollment in a course
+      parameters:
+      - in: path
+        name: course_id
+        schema:
+          type: string
+        description: Course ID (e.g. course-v1:org+course+run).
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        description: Username of the user.
+        required: true
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollment'
+          description: Enrollment retrieved successfully (or empty body if no enrollment).
+        '400':
+          description: Invalid request data or parameters.
+        '404':
+          description: The requested resource does not exist.
+  /v2/enrollment/{username},{course_id}:
+    get:
+      operationId: v2_enrollment_,_retrieve
+      description: Returns the current user's enrollment for the specified course,
+        or the named user's enrollment when invoked with the {username},{course_id}
+        URL form (server-to-server or staff only).
+      summary: Retrieve a user's enrollment in a course
+      parameters:
+      - in: path
+        name: course_id
+        schema:
+          type: string
+        description: Course ID (e.g. course-v1:org+course+run).
+        required: true
+      - in: path
+        name: username
+        schema:
+          type: string
+        description: Username of the user.
+        required: true
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollment'
+          description: Enrollment retrieved successfully (or empty body if no enrollment).
+        '400':
+          description: Invalid request data or parameters.
+        '404':
+          description: The requested resource does not exist.
+  /v2/enrollment/enrollment_allowed/:
+    get:
+      operationId: v2_enrollment_enrollment_allowed_retrieve
+      description: GET lists allowed enrollments for an email; POST creates a new
+        one; DELETE removes an existing one by email + course_id. Admin-only.
+      summary: Manage CourseEnrollmentAllowed records (admin-only)
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email to query (GET only). Defaults to the requester's email.
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseEnrollmentAllowedList'
+          description: GET success — list of allowed enrollments for the email.
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          description: POST success — allowed enrollment created.
+        '204':
+          description: DELETE success — allowed enrollment deleted.
+        '400':
+          description: Invalid request data or parameters.
+        '403':
+          description: The requester does not have permission for this operation.
+        '404':
+          description: 'DELETE: allowed enrollment not found.'
+        '409':
+          description: 'POST: allowed enrollment already exists.'
+    post:
+      operationId: v2_enrollment_enrollment_allowed_create
+      description: GET lists allowed enrollments for an email; POST creates a new
+        one; DELETE removes an existing one by email + course_id. Admin-only.
+      summary: Manage CourseEnrollmentAllowed records (admin-only)
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email to query (GET only). Defaults to the requester's email.
+      tags:
+      - openedx-platform-sdk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseEnrollmentAllowed'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseEnrollmentAllowedList'
+          description: GET success — list of allowed enrollments for the email.
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          description: POST success — allowed enrollment created.
+        '204':
+          description: DELETE success — allowed enrollment deleted.
+        '400':
+          description: Invalid request data or parameters.
+        '403':
+          description: The requester does not have permission for this operation.
+        '404':
+          description: 'DELETE: allowed enrollment not found.'
+        '409':
+          description: 'POST: allowed enrollment already exists.'
+    delete:
+      operationId: v2_enrollment_enrollment_allowed_destroy
+      description: GET lists allowed enrollments for an email; POST creates a new
+        one; DELETE removes an existing one by email + course_id. Admin-only.
+      summary: Manage CourseEnrollmentAllowed records (admin-only)
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Email to query (GET only). Defaults to the requester's email.
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseEnrollmentAllowedList'
+          description: GET success — list of allowed enrollments for the email.
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseEnrollmentAllowed'
+          description: POST success — allowed enrollment created.
+        '204':
+          description: DELETE success — allowed enrollment deleted.
+        '400':
+          description: Invalid request data or parameters.
+        '403':
+          description: The requester does not have permission for this operation.
+        '404':
+          description: 'DELETE: allowed enrollment not found.'
+        '409':
+          description: 'POST: allowed enrollment already exists.'
+  /v2/enrollment/unenroll/:
+    post:
+      operationId: v2_enrollment_unenroll_create
+      description: Privileged retirement-pipeline use only. Unenrolls the named user
+        from every active enrollment. The request must be made by a service user with
+        CanRetireUser permission, not the user being unenrolled.
+      summary: Unenroll a user from all courses (retirement)
+      tags:
+      - openedx-platform-sdk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+              required:
+              - username
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+              required:
+              - username
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+              required:
+              - username
+      responses:
+        '200':
+          description: List of courses from which the user was unenrolled.
+        '204':
+          description: User has no active enrollments.
+        '400':
+          description: Invalid request data or parameters.
+        '404':
+          description: The requested resource does not exist.
+  /v2/enrollments/:
+    get:
+      operationId: v2_enrollments_list
+      description: Admin-only paginated list of CourseEnrollment records, optionally
+        filtered by course_key, course_keys, username, or email, and optionally ordered.
+      summary: List all course enrollments (admin-only, paginated)
+      parameters:
+      - in: query
+        name: course_id
+        schema:
+          type: string
+        description: Deprecated alias for 'course_key' (ADR 0033). Use 'course_key'
+          instead.
+        deprecated: true
+      - in: query
+        name: course_ids
+        schema:
+          type: string
+        description: Deprecated alias for 'course_keys' (ADR 0033). Use 'course_keys'
+          instead.
+        deprecated: true
+      - in: query
+        name: course_key
+        schema:
+          type: string
+        description: Filter to enrollments for this course (OEP-68).
+      - in: query
+        name: course_keys
+        schema:
+          type: string
+        description: Comma-separated list of course keys (OEP-68).
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Comma-separated list of emails.
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: 'Order results by one of: created, -created, id, -id (ADR 0033
+          §3).'
+      - in: query
+        name: page
+        schema:
+          type: string
+        description: Page number to retrieve. Default 1.
+      - in: query
+        name: page_size
+        schema:
+          type: string
+        description: Items per page (default 10, max 100).
+      - in: query
+        name: username
+        schema:
+          type: string
+        description: Comma-separated list of usernames.
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseEnrollmentsApiListList'
+          description: Paginated list of course enrollments.
+        '400':
+          description: Invalid request data or parameters.
+        '401':
+          description: The requester is not authenticated.
+        '403':
+          description: The requester does not have permission for this operation.
+  /v2/roles/:
+    get:
+      operationId: v2_roles_retrieve
+      description: Returns the list of course-level roles held by the currently logged-in
+        user, plus an is_staff flag. Optionally filters by course_key (or course_id,
+        deprecated).
+      summary: List the current user's course roles
+      parameters:
+      - in: query
+        name: course_id
+        schema:
+          type: string
+        description: Deprecated alias for 'course_key' (ADR 0033). Use 'course_key'
+          instead.
+        deprecated: true
+      - in: query
+        name: course_key
+        schema:
+          type: string
+        description: If provided, only roles for this course are returned (OEP-68).
+      tags:
+      - openedx-platform-sdk
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRolesResponse'
+          description: Roles retrieved successfully.
+        '400':
+          description: Invalid request data or parameters.
+components:
+  schemas:
+    CourseEnrollment:
+      type: object
+      description: |-
+        Serializes CourseEnrollment models
+
+        Aggregates all data from the Course Enrollment table, and pulls in the serialization for
+        the Course block and course modes, to give a complete representation of course enrollment.
+      properties:
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        mode:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        course_details:
+          $ref: '#/components/schemas/enrollment.Course'
+        user:
+          type: string
+          readOnly: true
+      required:
+      - course_details
+      - created
+      - user
+    CourseEnrollmentAllowed:
+      type: object
+      description: |-
+        Serializes CourseEnrollmentAllowed model
+
+        Aggregates all data from the CourseEnrollmentAllowed table, and pulls in the serialization
+        to give a complete representation of course enrollment allowed.
+      properties:
+        email:
+          type: string
+          maxLength: 255
+        course_id:
+          type: string
+          maxLength: 255
+        auto_enroll:
+          type: boolean
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        user:
+          type: integer
+          nullable: true
+          description: First user which enrolled in the specified course through the
+            specified e-mail. Once set, it won't change.
+      required:
+      - course_id
+      - created
+      - email
+    CourseEnrollmentsApiList:
+      type: object
+      description: |-
+        Serializes CourseEnrollment model and returns a subset of fields returned
+        by the CourseEnrollmentSerializer.
+      properties:
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        mode:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        user:
+          type: string
+          readOnly: true
+        course_id:
+          type: string
+      required:
+      - course_id
+      - created
+      - user
+    PaginatedCourseEnrollmentAllowedList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseEnrollmentAllowed'
+    PaginatedCourseEnrollmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseEnrollment'
+    PaginatedCourseEnrollmentsApiListList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseEnrollmentsApiList'
+    UserRole:
+      type: object
+      description: Serializes a single course-level role entry for a user (ADR 0025).
+      properties:
+        org:
+          type: string
+        course_id:
+          type: string
+          readOnly: true
+        role:
+          type: string
+      required:
+      - course_id
+      - org
+      - role
+    UserRolesResponse:
+      type: object
+      description: Serializes the full response payload for UserRolesViewSet (ADR
+        0025).
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRole'
+        is_staff:
+          type: boolean
+      required:
+      - is_staff
+      - roles
+    enrollment.Course:
+      type: object
+      description: Serialize a course block and related information.
+      properties:
+        course_id:
+          type: string
+        course_name:
+          type: string
+        enrollment_start:
+          type: string
+          format: date-time
+        enrollment_end:
+          type: string
+          format: date-time
+        course_start:
+          type: string
+          format: date-time
+        course_end:
+          type: string
+          format: date-time
+        invite_only:
+          type: boolean
+        course_modes:
+          type: string
+          readOnly: true
+        pacing_type:
+          type: string
+          readOnly: true
+      required:
+      - course_end
+      - course_id
+      - course_modes
+      - course_name
+      - course_start
+      - enrollment_end
+      - enrollment_start
+      - invite_only
+      - pacing_type
+servers:
+- url: http://localhost:18000
+  description: Local
