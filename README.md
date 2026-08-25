@@ -55,15 +55,21 @@ OpenedX Studio uses JWT tokens via the OAuth2 `client_credentials` flow.
 from openedx_platform_sdk import OAuth2ClientCredentials
 
 auth = OAuth2ClientCredentials(
-    lms_url="http://localhost:18000",
+    lms_url="http://local.openedx.io:8000",
+    studio_url="http://studio.local.openedx.io:8001/api/contentstore",
     client_id="your-client-id",
     client_secret="your-client-secret",
 )
 
-# Get a ready-to-use authenticated client (token fetched automatically)
-with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/contentstore") as client:
+# Studio APIs
+with auth.get_studio_client() as client:
     from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
     result = v3_home_retrieve.sync(client=client)
+
+# LMS Enrollment APIs
+with auth.get_lms_client() as client:
+    from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollment_list
+    result = v2_enrollment_list.sync(client=client)
 ```
 
 Token is cached and auto-refreshed 60 seconds before expiry. The `JWT` prefix is used automatically (required by OpenedX).
@@ -169,15 +175,15 @@ auth = OAuth2ClientCredentials(
     client_secret="your-client-secret",
 )
 
-with auth.get_client(studio_url="http://studio.local.openedx.io:8001/api/contentstore") as client:
+with auth.get_studio_client() as client:
     home = v3_home_retrieve.sync(client=client)
     print(home.studio_name)
     print(home.courses)
 ```
 
-> **Note:** The `studio_url` must include `/api/contentstore` — the SDK appends versioned paths (e.g. `/v3/home/`) directly to this base.
+> **Note:** `studio_url` must include `/api/contentstore` — the SDK appends versioned paths (e.g. `/v3/home/`) directly to this base.
 >
-> For Enrollment v2 APIs, use `http://local.openedx.io:8000/api/enrollment` as the base URL instead — enrollment endpoints live on LMS, not Studio.
+> Use `auth.get_lms_client()` for Enrollment v2 APIs — it automatically targets `{lms_url}/api/enrollment`.
 
 For typed usage examples covering all API groups (Home v3/v4, Course Details, Authoring Grading, XBlock lifecycle, Enrollment v2), see **[docs/testing-sdk-apis.rst](docs/testing-sdk-apis.rst)**.
 

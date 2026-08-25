@@ -1,0 +1,146 @@
+# regenerate_sdk.yml
+#
+# Automatically regenerates the Open edX Platform SDK from OpenAPI schemas
+# committed in the openedx/openedx-platform repository, then opens a PR
+# against this repo if any files changed.
+#
+# Two trigger modes:
+#   1. Scheduled — runs every Monday at 09:00 UTC so the SDK stays in sync
+#      with weekly platform releases automatically.
+#   2. Manual (workflow_dispatch) — run on-demand from the GitHub Actions UI
+#      when you want to force a regeneration immediately (e.g. after a
+#      platform schema change lands mid-week).
+#
+# Requirements:
+#   - A GITHUB_TOKEN with PR-creation permissions is required.
+#     The default token provided by GitHub Actions is sufficient for PRs
+#     within the same repository (no extra secrets needed in most cases).
+
+name: Regenerate SDK from platform schemas
+
+on:
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Check out this SDK repository (full history for clean PR creation)
+      # -----------------------------------------------------------------------
+      - name: Checkout SDK repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # 2. Check out only the schema files from openedx/openedx-platform
+      #
+      #    NOTE: The paths listed in `sparse-checkout` below may change once
+      #    the platform PR that commits the generated schemas lands. Update
+      #    them to match wherever the platform CI ends up writing the files.
+      # -----------------------------------------------------------------------
+      - name: Checkout platform schemas (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: openedx/openedx-platform
+          path: platform/
+          sparse-checkout: |
+            lms_schema.yml
+            cms_schema.yml
+          sparse-checkout-cone-mode: false
+
+      # -----------------------------------------------------------------------
+      # 3. Set up Python 3.12
+      # -----------------------------------------------------------------------
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # -----------------------------------------------------------------------
+      # 4. Install SDK generation dependencies
+      # -----------------------------------------------------------------------
+      - name: Install dependencies
+        run: pip install openapi-python-client pyyaml
+
+      # -----------------------------------------------------------------------
+      # 5. Copy schemas from the platform checkout into the SDK root
+      #
+      #    NOTE: The source file names and destination names below depend on
+      #    where the platform CI commits the schemas and what the regen script
+      #    expects. Adjust if the platform PR changes the naming conventions.
+      # -----------------------------------------------------------------------
+      - name: Copy schemas from platform checkout
+        run: |
+          # lms_schema.yml keeps the same name
+          cp platform/lms_schema.yml lms_schema.yml
+          # cms_schema.yml is consumed by the regen script as schema.yml
+          cp platform/cms_schema.yml schema.yml
+
+      # -----------------------------------------------------------------------
+      # 6. Regenerate the SDK (skip downloading schemas — we already have them)
+      # -----------------------------------------------------------------------
+      - name: Regenerate SDK
+        run: SKIP_SCHEMA_DOWNLOAD=1 ./regen_sdk.sh
+
+      # -----------------------------------------------------------------------
+      # 7. Lint and auto-fix with ruff
+      # -----------------------------------------------------------------------
+      - name: Lint and fix with ruff
+        run: |
+          pip install ruff
+          ruff check --fix .
+
+      # -----------------------------------------------------------------------
+      # 8. Open a PR if anything changed
+      #
+      #    The PR body deliberately includes the platform commit SHA so that
+      #    reviewers can trace which exact schema revision triggered this run.
+      #    It also calls out postprocess_sdk.py so reviewers know to look there
+      #    for any auto-applied bug fixes in the diff.
+      # -----------------------------------------------------------------------
+      - name: Open PR if there are changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/regenerate-sdk
+          commit-message: "chore: regenerate SDK from platform schemas"
+          title: "chore: regenerate SDK from updated platform schemas"
+          labels: "automated,sdk-regeneration"
+          body: |
+            ## Auto-generated SDK regeneration
+
+            This PR was opened automatically by the **Regenerate SDK** workflow
+            ([`regenerate_sdk.yml`](.github/workflows/regenerate_sdk.yml)).
+
+            ### What triggered this?
+
+            The workflow ran against the latest commit of
+            [`openedx/openedx-platform`](https://github.com/openedx/openedx-platform).
+
+            Platform commit SHA used for this run:
+            `${{ github.sha }}`
+
+            > If this run was triggered by a specific platform schema PR, link
+            > it here for traceability (the workflow cannot do this
+            > automatically without platform-side metadata).
+
+            ### What changed?
+
+            The SDK was regenerated from `lms_schema.yml` and `schema.yml`
+            (CMS) using `openapi-python-client`. Ruff was then run to
+            auto-fix any lint issues introduced by the generator.
+
+            ### Review checklist
+
+            - [ ] Review the diff carefully — auto-applied bug fixes are in
+                  **`postprocess_sdk.py`**. Make sure the regeneration did not
+                  accidentally revert intentional post-processing patches.
+            - [ ] Confirm the schema versions look correct (check file
+                  headers).
+            - [ ] Run the test suite locally if the diff is large.

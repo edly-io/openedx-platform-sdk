@@ -9,16 +9,17 @@ Usage:
     from openedx_platform_sdk import AuthenticatedClient
 
     auth = OAuth2ClientCredentials(
-        lms_url="http://localhost:18000",
+        lms_url="http://local.openedx.io:8000",
+        studio_url="http://studio.local.openedx.io:8001/api/contentstore",
         client_id="your-client-id",
         client_secret="your-client-secret",
     )
 
-    client = auth.get_client(studio_url="http://localhost:18010")
+    with auth.get_studio_client() as client:
+        result = some_studio_api.sync(client=client)
 
-    # Use with context manager (recommended)
-    with auth.get_client(studio_url="http://localhost:18010") as client:
-        result = some_api.sync(client=client)
+    with auth.get_lms_client() as client:
+        result = some_enrollment_api.sync(client=client)
 
     # Token auto-refreshes on the next get_client() call once expired.
 """
@@ -43,6 +44,7 @@ class OAuth2ClientCredentials:
         lms_url: str,
         client_id: str,
         client_secret: str,
+        studio_url: str = "",
         refresh_buffer_seconds: int = 60,
         verify_ssl: bool = True,
     ):
@@ -51,12 +53,14 @@ class OAuth2ClientCredentials:
             lms_url: Base URL of the LMS (e.g. "http://localhost:18000")
             client_id: OAuth2 client ID registered in the LMS
             client_secret: OAuth2 client secret
+            studio_url: Base URL of Studio (e.g. "http://localhost:18010/api/contentstore")
             refresh_buffer_seconds: Refresh the token this many seconds before it expires
             verify_ssl: Whether to verify SSL certificates
         """
         self.lms_url = lms_url.rstrip("/")
         self.client_id = client_id
         self.client_secret = client_secret
+        self.studio_url = studio_url
         self.refresh_buffer_seconds = refresh_buffer_seconds
         self.verify_ssl = verify_ssl
 
@@ -88,7 +92,7 @@ class OAuth2ClientCredentials:
 
     def get_client(
         self,
-        studio_url: str,
+        base_url: str,
         raise_on_unexpected_status: bool = False,
         verify_ssl: bool | None = None,
         **kwargs,
@@ -97,15 +101,15 @@ class OAuth2ClientCredentials:
         Return an AuthenticatedClient pre-configured with a valid JWT token.
 
         Args:
-            studio_url: Base URL of Studio (e.g. "http://localhost:18010/api/contentstore")
+            base_url: Base URL of the API (e.g. "http://localhost:18010/api/contentstore")
             raise_on_unexpected_status: Raise on undocumented status codes
-            verify_ssl: Override SSL verification for the Studio client
+            verify_ssl: Override SSL verification for the client
             **kwargs: Additional arguments forwarded to AuthenticatedClient
         """
         headers = kwargs.pop("headers", {})
         headers.setdefault("Accept", "application/json")
         return AuthenticatedClient(
-            base_url=studio_url.rstrip("/"),
+            base_url=base_url.rstrip("/"),
             token=self.get_token(),
             prefix="JWT",
             raise_on_unexpected_status=raise_on_unexpected_status,
@@ -113,3 +117,22 @@ class OAuth2ClientCredentials:
             headers=headers,
             **kwargs,
         )
+
+    def get_studio_client(self, **kwargs) -> AuthenticatedClient:
+        """
+        Return an AuthenticatedClient configured for the Studio API.
+
+        Raises:
+            ValueError: If studio_url was not provided at construction time.
+        """
+        if not self.studio_url:
+            raise ValueError(
+                "studio_url must be set on OAuth2ClientCredentials to use get_studio_client()"
+            )
+        return self.get_client(base_url=self.studio_url, **kwargs)
+
+    def get_lms_client(self, **kwargs) -> AuthenticatedClient:
+        """
+        Return an AuthenticatedClient configured for the LMS enrollment API.
+        """
+        return self.get_client(base_url=self.lms_url.rstrip("/") + "/api/enrollment", **kwargs)

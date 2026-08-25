@@ -23,20 +23,24 @@ Install the SDK in editable mode and configure credentials:
 
     auth = OAuth2ClientCredentials(
         lms_url="http://local.openedx.io:8000",
+        studio_url="http://studio.local.openedx.io:8001/api/contentstore",
         client_id="your-client-id",
         client_secret="your-client-secret",
     )
 
-    STUDIO_URL = "http://studio.local.openedx.io:8001/api/contentstore"
+    # Studio APIs
+    with auth.get_studio_client() as client:
+        ...
 
-    # All examples below run inside this context manager
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    # LMS Enrollment APIs
+    with auth.get_lms_client() as enroll_client:
         ...
 
 .. note::
 
    ``studio_url`` **must** include ``/api/contentstore``.
    The SDK appends versioned paths (e.g. ``/v3/home/``) directly to this base.
+   ``get_lms_client()`` automatically targets ``{lms_url}/api/enrollment``.
 
 ----
 
@@ -49,7 +53,7 @@ Retrieve the Studio home page (studio name, course list, library list):
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         home = v3_home_retrieve.sync(client=client)
 
         print(home.studio_name)     # e.g. "Your Studio"
@@ -62,7 +66,7 @@ Retrieve only courses (lighter response):
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_courses_retrieve
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         result = v3_home_courses_retrieve.sync(client=client)
 
         for course in result.courses:
@@ -74,7 +78,7 @@ Retrieve only libraries:
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_libraries_retrieve
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         result = v3_home_libraries_retrieve.sync(client=client)
 
         for lib in result.libraries:
@@ -92,7 +96,7 @@ The v4 endpoint returns a paginated wrapper with ``count``, ``num_pages``, ``cur
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v4_home_courses_retrieve
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         page = v4_home_courses_retrieve.sync(client=client)
 
         print(f"Total courses : {page.count}")
@@ -121,7 +125,7 @@ Retrieve course details
 
     COURSE_KEY = "course-v1:org+course+run"
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         details = v3_course_details_retrieve.sync(client=client, course_id=COURSE_KEY)
 
         print(details.course_id)
@@ -145,7 +149,7 @@ retrieve first, mutate what you need, then PUT it back:
 
     COURSE_KEY = "course-v1:org+course+run"
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         details = v3_course_details_retrieve.sync(client=client, course_id=COURSE_KEY)
 
         # Toggle self-paced flag
@@ -177,7 +181,7 @@ Pass them via ``additional_properties``:
 
     COURSE_KEY = "course-v1:org+course+run"
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         body = PatchedauthoringGradingCourseGradingV0(
             graders=[
                 AuthoringGradingGradersV0(
@@ -221,7 +225,7 @@ Retrieve an XBlock
 
     COURSE_USAGE_KEY = "block-v1:org+course+run+type@course+block@course"
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         xblock = v1_xblock_retrieve.sync(
             client=client,
             usage_key_string=COURSE_USAGE_KEY,
@@ -240,7 +244,7 @@ Create an XBlock
 
     COURSE_USAGE_KEY = "block-v1:org+course+run+type@course+block@course"
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         body = Xblock(
             parent_locator=COURSE_USAGE_KEY,
             category="chapter",
@@ -261,7 +265,7 @@ Update (partial) an XBlock
     from openedx_platform_sdk.api.openedx_platform_sdk import v1_xblock_partial_update
     from openedx_platform_sdk.models.patched_xblock import PatchedXblock
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         body = PatchedXblock(display_name="Renamed Section")
         resp = v1_xblock_partial_update.sync_detailed(
             client=client,
@@ -277,7 +281,7 @@ Delete an XBlock
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v1_xblock_destroy
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         resp = v1_xblock_destroy.sync_detailed(
             client=client,
             usage_key_string=locator,
@@ -299,7 +303,7 @@ Full XBlock lifecycle (create → rename → delete)
 
     COURSE_USAGE_KEY = "block-v1:org+course+run+type@course+block@course"
 
-    with auth.get_client(studio_url=STUDIO_URL) as client:
+    with auth.get_studio_client() as client:
         # 1. Create
         resp = v1_xblock_create.sync_detailed(
             client=client,
@@ -334,15 +338,8 @@ Enrollment v2
    Enrollment APIs live in LMS (``openedx.core.djangoapps.enrollments``).
    The SDK schema is generated from both Studio and LMS and merged at build time.
 
-   **At runtime, the enrollment client must target the LMS enrollment base URL, not Studio.**
-
-.. code-block:: python
-
-    LMS_ENROLLMENT_URL = "http://local.openedx.io:8000/api/enrollment"
-
-    # Use a separate client pointed at LMS
-    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
-        ...
+   Use ``auth.get_lms_client()`` for all enrollment calls — it automatically
+   targets ``{lms_url}/api/enrollment``.
 
 List enrollments for the authenticated user
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,7 +348,7 @@ List enrollments for the authenticated user
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollment_list
 
-    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+    with auth.get_lms_client() as enroll_client:
         result = v2_enrollment_list.sync(client=enroll_client)
         print(result.count)
         for enrollment in result.results:
@@ -366,7 +363,7 @@ Get course enrollment details
 
     COURSE_KEY = "course-v1:org+course+run"
 
-    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+    with auth.get_lms_client() as enroll_client:
         course = v2_course_retrieve.sync(course_id=COURSE_KEY, client=enroll_client)
         print(course.course_id)
         print(course.invite_only)
@@ -378,7 +375,7 @@ Get user roles
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v2_roles_retrieve
 
-    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+    with auth.get_lms_client() as enroll_client:
         roles = v2_roles_retrieve.sync(client=enroll_client)
         print(roles.roles)
 
@@ -389,7 +386,7 @@ Admin enrollment list
 
     from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollments_list
 
-    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+    with auth.get_lms_client() as enroll_client:
         result = v2_enrollments_list.sync(client=enroll_client, course_id=COURSE_KEY)
         for item in result.results:
             print(item.user, item.mode, item.is_active)
@@ -420,7 +417,7 @@ Enroll and retrieve
         ),
     )
 
-    with auth.get_client(studio_url=LMS_ENROLLMENT_URL) as enroll_client:
+    with auth.get_lms_client() as enroll_client:
         resp = v2_enrollment_create.sync_detailed(client=enroll_client, body=body)
         print(resp.status_code.value)   # 200
 
