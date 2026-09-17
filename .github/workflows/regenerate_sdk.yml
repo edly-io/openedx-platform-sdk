@@ -50,8 +50,8 @@ jobs:
           repository: openedx/openedx-platform
           path: platform/
           sparse-checkout: |
-            lms_schema.yml
-            cms_schema.yml
+            docs/lms-openapi.yaml
+            docs/cms-openapi.yaml
           sparse-checkout-cone-mode: false
 
       # -----------------------------------------------------------------------
@@ -84,8 +84,8 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Regenerate SDK
         run: |
-          CMS_SCHEMA_FILE="platform/cms_schema.yml" \
-          LMS_SCHEMA_FILE="platform/lms_schema.yml" \
+          CMS_SCHEMA_FILE="platform/docs/cms-openapi.yaml" \
+          LMS_SCHEMA_FILE="platform/docs/lms-openapi.yaml" \
           ./regen_sdk.sh
 
       # -----------------------------------------------------------------------
@@ -128,7 +128,7 @@ jobs:
 
             ### What changed?
 
-            The SDK was regenerated from `lms_schema.yml` and `cms_schema.yml`
+            The SDK was regenerated from `docs/lms-openapi.yaml` and `docs/cms-openapi.yaml`
             using `openapi-python-client`. Ruff was then run to
             auto-fix any lint issues introduced by the generator.
 

@@ -7,8 +7,8 @@
 # Schema source (pick one — CI uses option A, local dev uses B or C):
 #
 #   A) CI: pass schema file paths directly (used by regenerate_sdk.yml):
-#        CMS_SCHEMA_FILE=platform/cms_schema.yml \
-#        LMS_SCHEMA_FILE=platform/lms_schema.yml \
+#        CMS_SCHEMA_FILE=platform/docs/cms-openapi.yaml \
+#        LMS_SCHEMA_FILE=platform/docs/lms-openapi.yaml \
 #        ./regen_sdk.sh
 #
 #   B) Local dev with a platform checkout (copies schemas from it):
@@ -40,8 +40,8 @@ if [[ -n "${PLATFORM_DIR:-}" ]]; then
     echo "→ Copying schemas from PLATFORM_DIR=$PLATFORM_DIR ..."
     CMS_SCHEMA_FILE="$SCRIPT_DIR/cms_schema.yml"
     LMS_SCHEMA_FILE="$SCRIPT_DIR/lms_schema.yml"
-    cp "$PLATFORM_DIR/cms_schema.yml" "$CMS_SCHEMA_FILE"
-    cp "$PLATFORM_DIR/lms_schema.yml" "$LMS_SCHEMA_FILE"
+    cp "$PLATFORM_DIR/docs/cms-openapi.yaml" "$CMS_SCHEMA_FILE"
+    cp "$PLATFORM_DIR/docs/lms-openapi.yaml" "$LMS_SCHEMA_FILE"
     echo "  CMS schema : $CMS_SCHEMA_FILE"
     echo "  LMS schema : $LMS_SCHEMA_FILE"
 
