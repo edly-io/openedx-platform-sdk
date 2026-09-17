@@ -29,3 +29,8 @@ dmypy.json
 
 # Sparse checkout of openedx-platform made by regenerate_sdk.yml
 /platform/
+
+# JavaScript
+javascript/node_modules/
+javascript/dist/
+javascript/coverage/
