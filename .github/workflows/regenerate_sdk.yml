@@ -93,6 +93,22 @@ jobs:
           ruff check --fix .
 
       # -----------------------------------------------------------------------
+      # 7b. Regenerate the javascript SDK from the same schemas
+      # -----------------------------------------------------------------------
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: javascript/package-lock.json
+
+      - name: Regenerate javascript SDK
+        run: |
+          CMS_SCHEMA_FILE="platform/cms_schema.yml" \
+          LMS_SCHEMA_FILE="platform/lms_schema.yml" \
+          ./regen_sdk_js.sh
+
+      # -----------------------------------------------------------------------
       # 8. Open a PR if anything changed
       #
       #    The PR body deliberately includes the platform commit SHA so that

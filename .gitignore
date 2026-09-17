@@ -26,3 +26,8 @@ dmypy.json
 /cms_schema.yml
 /lms_schema.yml
 /filtered_schema.yml
+
+# JavaScript
+javascript/node_modules/
+javascript/dist/
+javascript/coverage/
