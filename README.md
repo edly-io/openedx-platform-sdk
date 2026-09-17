@@ -1,5 +1,18 @@
 # openedx-platform-sdk
 
+Client libraries for the OpenedX Authoring and Enrollment APIs, auto-generated
+from the platform's OpenAPI schema.
+
+| Directory | Package | Generator |
+| --- | --- | --- |
+| root (`openedx_platform_sdk/`) | `openedx-platform-sdk` (PyPI) | openapi-python-client |
+| [`javascript/`](./javascript) | `@openedx/openedx-platform-sdk` (npm) | @hey-api/openapi-ts |
+
+Both are generated from the same filtered schema, so they cover the same
+operations. See [`javascript/README.md`](./javascript/README.md) for the JS SDK.
+
+---
+
 A Python client library for the [OpenedX Authoring API](https://docs.openedx.org), auto-generated from the platform's OpenAPI schema using [openapi-python-client](https://github.com/openapi-generators/openapi-python-client).
 
 Covers the standardized v1/v3/v4 Studio APIs and LMS Enrollment v2 APIs tagged `openedx-platform-sdk` in the platform.

@@ -97,6 +97,22 @@ jobs:
         run: uv run --locked ruff check --fix .
 
       # -----------------------------------------------------------------------
+      # 7b. Regenerate the javascript SDK from the same schemas
+      # -----------------------------------------------------------------------
+      - name: Set up Node 20
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: javascript/package-lock.json
+
+      - name: Regenerate javascript SDK
+        run: |
+          CMS_SCHEMA_FILE="platform/docs/cms-openapi.yaml" \
+          LMS_SCHEMA_FILE="platform/docs/lms-openapi.yaml" \
+          ./regen_sdk_js.sh
+
+      # -----------------------------------------------------------------------
       # 8. Open a PR if anything changed
       #
       #    The PR body deliberately includes the platform commit SHA so that
