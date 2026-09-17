@@ -56,7 +56,7 @@ from openedx_platform_sdk import OAuth2ClientCredentials
 
 auth = OAuth2ClientCredentials(
     lms_url="http://local.openedx.io:8000",
-    studio_url="http://studio.local.openedx.io:8001/api/contentstore",
+    studio_url="http://studio.local.openedx.io:8001",
     client_id="your-client-id",
     client_secret="your-client-secret",
 )
@@ -181,9 +181,9 @@ with auth.get_studio_client() as client:
     print(home.courses)
 ```
 
-> **Note:** `studio_url` must include `/api/contentstore` — the SDK appends versioned paths (e.g. `/v3/home/`) directly to this base.
+> **Note:** `lms_url` and `studio_url` are both plain service roots — no API prefix. Each helper appends its own: `get_studio_client()` targets `{studio_url}/api/contentstore` and `get_lms_client()` targets `{lms_url}/api/enrollment`.
 >
-> Use `auth.get_lms_client()` for Enrollment v2 APIs — it automatically targets `{lms_url}/api/enrollment`.
+> Both accept an `api_prefix` argument to reach a different tagged namespace on the same service.
 
 For typed usage examples covering all API groups (Home v3/v4, Course Details, Authoring Grading, XBlock lifecycle, Enrollment v2), see **[docs/testing-sdk-apis.rst](docs/testing-sdk-apis.rst)**.
 

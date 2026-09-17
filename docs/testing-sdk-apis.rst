@@ -23,7 +23,7 @@ Install the SDK in editable mode and configure credentials:
 
     auth = OAuth2ClientCredentials(
         lms_url="http://local.openedx.io:8000",
-        studio_url="http://studio.local.openedx.io:8001/api/contentstore",
+        studio_url="http://studio.local.openedx.io:8001",
         client_id="your-client-id",
         client_secret="your-client-secret",
     )
@@ -38,9 +38,11 @@ Install the SDK in editable mode and configure credentials:
 
 .. note::
 
-   ``studio_url`` **must** include ``/api/contentstore``.
-   The SDK appends versioned paths (e.g. ``/v3/home/``) directly to this base.
-   ``get_lms_client()`` automatically targets ``{lms_url}/api/enrollment``.
+   ``lms_url`` and ``studio_url`` are both plain service roots, with no API
+   prefix. Each helper appends its own: ``get_studio_client()`` targets
+   ``{studio_url}/api/contentstore`` and ``get_lms_client()`` targets
+   ``{lms_url}/api/enrollment``. Both take an ``api_prefix`` argument to reach
+   a different tagged namespace on the same service.
 
 ----
 

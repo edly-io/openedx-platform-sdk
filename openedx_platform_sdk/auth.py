@@ -10,7 +10,7 @@ Usage:
 
     auth = OAuth2ClientCredentials(
         lms_url="http://local.openedx.io:8000",
-        studio_url="http://studio.local.openedx.io:8001/api/contentstore",
+        studio_url="http://studio.local.openedx.io:8001",
         client_id="your-client-id",
         client_secret="your-client-secret",
     )
@@ -53,14 +53,14 @@ class OAuth2ClientCredentials:
             lms_url: Base URL of the LMS (e.g. "http://localhost:18000")
             client_id: OAuth2 client ID registered in the LMS
             client_secret: OAuth2 client secret
-            studio_url: Base URL of Studio (e.g. "http://localhost:18010/api/contentstore")
+            studio_url: Base URL of Studio (e.g. "http://localhost:18010")
             refresh_buffer_seconds: Refresh the token this many seconds before it expires
             verify_ssl: Whether to verify SSL certificates
         """
         self.lms_url = lms_url.rstrip("/")
         self.client_id = client_id
         self.client_secret = client_secret
-        self.studio_url = studio_url
+        self.studio_url = studio_url.rstrip("/")
         self.refresh_buffer_seconds = refresh_buffer_seconds
         self.verify_ssl = verify_ssl
 
@@ -118,9 +118,19 @@ class OAuth2ClientCredentials:
             **kwargs,
         )
 
-    def get_studio_client(self, **kwargs) -> AuthenticatedClient:
+    # Default API prefixes. The generated client's paths are relative to these
+    # (e.g. "/v2/enrollment/"), because the schemas are produced with the
+    # service prefix trimmed, so it has to come from the client's base URL.
+    STUDIO_API_PREFIX = "/api/contentstore"
+    LMS_API_PREFIX = "/api/enrollment"
+
+    def get_studio_client(self, api_prefix: str = STUDIO_API_PREFIX, **kwargs) -> AuthenticatedClient:
         """
-        Return an AuthenticatedClient configured for the Studio API.
+        Return an AuthenticatedClient configured for a Studio API.
+
+        Args:
+            api_prefix: API namespace to target, appended to ``studio_url``.
+            **kwargs: Additional arguments forwarded to get_client().
 
         Raises:
             ValueError: If studio_url was not provided at construction time.
@@ -129,10 +139,15 @@ class OAuth2ClientCredentials:
             raise ValueError(
                 "studio_url must be set on OAuth2ClientCredentials to use get_studio_client()"
             )
-        return self.get_client(base_url=self.studio_url, **kwargs)
+        return self.get_client(base_url=self.studio_url + api_prefix, **kwargs)
 
-    def get_lms_client(self, **kwargs) -> AuthenticatedClient:
+    def get_lms_client(self, api_prefix: str = LMS_API_PREFIX, **kwargs) -> AuthenticatedClient:
         """
-        Return an AuthenticatedClient configured for the LMS enrollment API.
+        Return an AuthenticatedClient configured for an LMS API.
+
+        Args:
+            api_prefix: API namespace to target, appended to ``lms_url``. Pass a
+                different value to reach another tagged LMS namespace.
+            **kwargs: Additional arguments forwarded to get_client().
         """
-        return self.get_client(base_url=self.lms_url.rstrip("/") + "/api/enrollment", **kwargs)
+        return self.get_client(base_url=self.lms_url + api_prefix, **kwargs)

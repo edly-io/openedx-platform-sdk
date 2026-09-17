@@ -5,8 +5,6 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.v2_enrollment_unenroll_create_data_body import V2EnrollmentUnenrollCreateDataBody
-from ...models.v2_enrollment_unenroll_create_files_body import V2EnrollmentUnenrollCreateFilesBody
 from ...models.v2_enrollment_unenroll_create_json_body import V2EnrollmentUnenrollCreateJsonBody
 from ...types import UNSET, Response, Unset
 
@@ -14,8 +12,6 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     *,
     body: V2EnrollmentUnenrollCreateJsonBody
-    | V2EnrollmentUnenrollCreateDataBody
-    | V2EnrollmentUnenrollCreateFilesBody
     | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -66,8 +62,6 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: V2EnrollmentUnenrollCreateJsonBody
-    | V2EnrollmentUnenrollCreateDataBody
-    | V2EnrollmentUnenrollCreateFilesBody
     | Unset = UNSET,
 ) -> Response[Any]:
     """Unenroll a user from all courses (retirement)
@@ -77,8 +71,6 @@ def sync_detailed(
 
     Args:
         body (V2EnrollmentUnenrollCreateJsonBody | Unset):
-        body (V2EnrollmentUnenrollCreateDataBody | Unset):
-        body (V2EnrollmentUnenrollCreateFilesBody | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -103,8 +95,6 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: V2EnrollmentUnenrollCreateJsonBody
-    | V2EnrollmentUnenrollCreateDataBody
-    | V2EnrollmentUnenrollCreateFilesBody
     | Unset = UNSET,
 ) -> Response[Any]:
     """Unenroll a user from all courses (retirement)
@@ -114,8 +104,6 @@ async def asyncio_detailed(
 
     Args:
         body (V2EnrollmentUnenrollCreateJsonBody | Unset):
-        body (V2EnrollmentUnenrollCreateDataBody | Unset):
-        body (V2EnrollmentUnenrollCreateFilesBody | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

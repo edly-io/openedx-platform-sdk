@@ -15,7 +15,10 @@ httpx = ">=0.23.1,<0.29.0"
 attrs = ">=22.2.0"
 
 [tool.poetry.group.dev.dependencies]
-openapi-python-client = ">=0.21.0"
+# Pinned exactly: the generator's output shape determines which fixes in
+# postprocess_sdk.py still apply, so a version bump is a deliberate change that
+# needs the regenerated client reviewed.
+openapi-python-client = "0.29.0"
 pyyaml = ">=6.0"
 
 [build-system]

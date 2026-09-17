@@ -48,23 +48,71 @@ def resolve_all_refs(names: set, components: dict) -> set:
 
 
 def merge_schema(base: dict, extra: dict) -> dict:
-    """Merge paths and components from extra into base (base takes precedence on conflict)."""
+    """Merge paths and components from extra into base (base takes precedence on conflict).
+
+    The two schemas come from independent drf-spectacular runs with no shared
+    naming discipline, so a name can legitimately mean different things in each.
+    Collisions are reported rather than dropped silently: an identical
+    definition is harmless, but a differing one means the kept definition now
+    describes the discarded one's endpoints too.
+    """
+    dropped_paths = []
+    conflicting_schemas = []
+    identical_schemas = []
+
     for path, path_item in extra.get("paths", {}).items():
         if path not in base.setdefault("paths", {}):
             base["paths"][path] = path_item
+        elif base["paths"][path] != path_item:
+            dropped_paths.append(path)
 
     extra_schemas = extra.get("components", {}).get("schemas", {})
     base_schemas = base.setdefault("components", {}).setdefault("schemas", {})
     for name, schema_def in extra_schemas.items():
         if name not in base_schemas:
             base_schemas[name] = schema_def
+        elif base_schemas[name] != schema_def:
+            conflicting_schemas.append(name)
+        else:
+            identical_schemas.append(name)
+
+    if dropped_paths:
+        print(
+            f"WARNING: {len(dropped_paths)} path(s) defined differently in both schemas; "
+            "kept the base (CMS) definition:"
+        )
+        for path in sorted(dropped_paths):
+            print(f"  - {path}")
+
+    if conflicting_schemas:
+        print(
+            f"WARNING: {len(conflicting_schemas)} component schema(s) share a name but differ "
+            "between the two services; kept the base (CMS) definition, which now also "
+            "describes the LMS endpoints that referenced it:"
+        )
+        for name in sorted(conflicting_schemas):
+            print(f"  - {name}")
+
+    if identical_schemas:
+        print(f"  {len(identical_schemas)} component schema(s) defined identically in both; no conflict")
 
     return base
 
 
 def fix_path_parameters(paths: dict) -> None:
-    """Remove path parameters that are declared but not present in the URL template."""
+    """Remove path parameters that are declared but not present in the URL template.
+
+    drf-spectacular emits these on some operations and openapi-python-client
+    skips any operation whose declared path parameters don't match its URL.
+    They are reported as they are dropped, so a regeneration diff can be traced
+    back to the schema rather than looking like an unexplained change.
+
+    Platform schema bug, not a generator bug. Tracked upstream by
+    https://github.com/openedx/openedx-platform/issues/39121 — delete this step
+    once that is fixed and the committed schemas are regenerated.
+    """
     import re
+    dropped = []
     for path, path_item in paths.items():
         template_params = set(re.findall(r"\{(\w+)\}", path))
         for method, operation in path_item.items():
@@ -76,7 +124,19 @@ def fix_path_parameters(paths: dict) -> None:
                 if not (p.get("in") == "path" and p.get("name") not in template_params)
             ]
             if len(fixed) != len(params):
+                removed = {p.get("name") for p in params} - {p.get("name") for p in fixed}
+                dropped.append((path, method.upper(), sorted(removed)))
                 operation["parameters"] = fixed
+
+    if dropped:
+        print(
+            f"WARNING: dropped {sum(len(names) for _, _, names in dropped)} path parameter(s) "
+            "declared on operations whose URL template does not contain them "
+            "(a platform schema bug — see "
+            "https://github.com/openedx/openedx-platform/issues/39121):"
+        )
+        for path, method, names in sorted(dropped):
+            print(f"  - {method} {path}: {', '.join(names)}")
 
 
 def filter_schema(input_path: str, output_path: str, tag: str, merge_path: str | None = None) -> None:

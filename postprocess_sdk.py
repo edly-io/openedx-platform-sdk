@@ -27,6 +27,23 @@ The script applies five targeted fixes in order:
                                        against the endpoint returning a bare
                                        JSON array instead of the expected
                                        paginated envelope.
+
+Fixes 4 and 5 work around platform schema bugs rather than generator bugs:
+the schema described responses the API never returns. Both are fixed by
+https://github.com/openedx/openedx-platform/pull/39120 — once that merges and
+the committed schemas are regenerated, these two steps can be deleted.
+6. fix_unenroll_body_union — drops the non-JSON body types from the unenroll
+                             endpoint, which fix 2 leaves accepted but
+                             unserialised (a silent empty POST to a
+                             destructive endpoint).
+
+It then restores the hand-written ``auth`` exports to ``__init__.py``, which
+the generator rewrites without them.
+
+Every step reports how many sites it patched, and the script exits non-zero if
+any of them patches nothing. A regeneration that suddenly needs no patches
+means the generator's output shape has changed, which needs a human to look
+rather than silently producing a client with the original bugs back in it.
 """
 
 import glob
@@ -39,7 +56,7 @@ import sys
 # Bug 1
 # ---------------------------------------------------------------------------
 
-def fix_unset_import(api_dir: str) -> None:
+def fix_unset_import(api_dir: str) -> int:
     """Add the missing ``Unset`` name to ``from ...types import`` lines.
 
     Some generated API files use ``Unset`` in type annotations (e.g.
@@ -47,20 +64,25 @@ def fix_unset_import(api_dir: str) -> None:
     This causes a ``NameError`` at runtime.  The fix appends ``, Unset`` to
     every matching import line.
     """
+    patched = 0
     for path in _glob_py(api_dir):
         text = open(path).read()
         old = "from ...types import UNSET, Response"
         new = "from ...types import UNSET, Response, Unset"
-        if old in text and new not in text:
+        if new in text:
+            patched += 1  # already in the fixed state
+        elif old in text:
             open(path, "w").write(text.replace(old, new))
+            patched += 1
             print(f"  Fixed missing Unset import in {os.path.basename(path)}")
+    return patched
 
 
 # ---------------------------------------------------------------------------
 # Bug 2
 # ---------------------------------------------------------------------------
 
-def fix_multipart_bug(api_dir: str) -> None:
+def fix_multipart_bug(api_dir: str) -> int:
     """Remove duplicate ``isinstance(body, X)`` blocks from ``_get_kwargs``.
 
     The generator emits three identical ``if isinstance(body, ...)`` blocks
@@ -71,6 +93,7 @@ def fix_multipart_bug(api_dir: str) -> None:
     Fix: keep only the JSON block — drop any block that populates
     ``_kwargs["data"]`` or ``_kwargs["files"]``.
     """
+    patched = 0
     for path in _glob_py(api_dir):
         lines = open(path).readlines()
         in_get_kwargs = False
@@ -103,14 +126,20 @@ def fix_multipart_bug(api_dir: str) -> None:
             i += 1
         if changed:
             open(path, "w").writelines(new_lines)
+            patched += 1
             print(f"  Fixed multipart bug in {os.path.basename(path)}")
+        elif "".join(lines).count("if isinstance(body,") == 1:
+            # Exactly one isinstance(body, ...) block means this file is
+            # already in the fixed state rather than never having had the bug.
+            patched += 1
+    return patched
 
 
 # ---------------------------------------------------------------------------
 # Bug 3
 # ---------------------------------------------------------------------------
 
-def fix_dict_safe_to_dict(models_dir: str) -> None:
+def fix_dict_safe_to_dict(models_dir: str) -> int:
     """Make ``to_dict()`` calls on DictField wrapper models dict-safe.
 
     The generator emits ``X = self.X.to_dict()`` unconditionally, but callers
@@ -118,6 +147,7 @@ def fix_dict_safe_to_dict(models_dir: str) -> None:
     ``X = self.X.to_dict() if not isinstance(self.X, dict) else dict(self.X)``
     whenever the preceding line is ``if not isinstance(self.X, Unset):``.
     """
+    patched = 0
     for path in _glob_py(models_dir):
         lines = open(path).readlines()
         new_lines: list[str] = []
@@ -151,20 +181,28 @@ def fix_dict_safe_to_dict(models_dir: str) -> None:
             i += 1
         if changed:
             open(path, "w").writelines(new_lines)
+            patched += 1
             print(f"  Fixed dict-safe to_dict() in {os.path.basename(path)}")
+        elif "else dict(self." in "".join(lines):
+            patched += 1  # already in the fixed state
+    return patched
 
 
 # ---------------------------------------------------------------------------
 # Bug 4
 # ---------------------------------------------------------------------------
 
-def fix_null_safe_datetime(models_dir: str) -> None:
+def fix_null_safe_datetime(models_dir: str) -> int:
     """Replace bare ``datetime.fromisoformat(d.pop(...))`` with a null-safe form.
 
     ``EnrollmentCourse`` datetime fields (``enrollment_start``,
     ``enrollment_end``, ``course_start``, ``course_end``) are marked required
     in the schema, but the API returns ``null`` for courses that have no dates
     set.  The bare ``fromisoformat`` call raises ``TypeError`` on ``None``.
+
+    Platform schema bug, not a generator bug. Fixed by
+    https://github.com/openedx/openedx-platform/pull/39120 — delete this step
+    once that has merged and the committed schemas are regenerated.
 
     Fix: split into a ``_raw_<var> = d.pop(...)`` step and a conditional
     ``fromisoformat`` that yields ``None`` when the raw value is not a string.
@@ -173,6 +211,7 @@ def fix_null_safe_datetime(models_dir: str) -> None:
     DT_PATTERN = re.compile(
         r"^(\s+)(\w+) = datetime\.datetime\.fromisoformat\(d\.pop\(\"(\w+)\"\)\)\s*$"
     )
+    patched = 0
     for path in _glob_py(models_dir):
         lines = open(path).readlines()
         new_lines: list[str] = []
@@ -200,14 +239,18 @@ def fix_null_safe_datetime(models_dir: str) -> None:
 
         if changed:
             open(path, "w").writelines(new_lines)
+            patched += 1
             print(f"  Fixed null-safe datetime parsing in {os.path.basename(path)}")
+        elif "_raw_" in "".join(lines):
+            patched += 1  # already in the fixed state
+    return patched
 
 
 # ---------------------------------------------------------------------------
 # Bug 5
 # ---------------------------------------------------------------------------
 
-def fix_plain_list_enrollment_allowed(models_dir: str) -> None:
+def fix_plain_list_enrollment_allowed(models_dir: str) -> int:
     """Normalise a bare-list response from the enrollment-allowed endpoint.
 
     ``GET /v2/enrollment/enrollment_allowed/`` returns a plain JSON array
@@ -215,6 +258,10 @@ def fix_plain_list_enrollment_allowed(models_dir: str) -> None:
     Fix: insert an ``isinstance(src_dict, list)`` guard at the top of
     ``PaginatedCourseEnrollmentAllowedList.from_dict()`` that converts the bare
     list into the envelope shape before the regular parsing runs.
+
+    Platform schema bug, not a generator bug. Fixed by
+    https://github.com/openedx/openedx-platform/pull/39120 — delete this step
+    once that has merged and the committed schemas are regenerated.
     """
     TARGET = "paginated_course_enrollment_allowed_list.py"
     MARKER = "        d = dict(src_dict)"
@@ -223,19 +270,133 @@ def fix_plain_list_enrollment_allowed(models_dir: str) -> None:
         "            src_dict = {\"count\": len(src_dict), \"results\": src_dict}\n"
     )
 
+    patched = 0
     for path in _glob_py(models_dir):
         if os.path.basename(path) != TARGET:
             continue
         text = open(path).read()
         if INSERT in text:
-            break  # already patched
+            patched += 1  # already patched; re-running is a no-op
+            break
         if MARKER not in text:
-            print(f"  WARNING: could not find marker in {TARGET}; skipping Bug 5 fix")
             break
         text = text.replace(MARKER, INSERT + MARKER, 1)
         open(path, "w").write(text)
+        patched += 1
         print(f"  Fixed plain-list response in {TARGET}")
         break
+    return patched
+
+
+# ---------------------------------------------------------------------------
+# Bug 6
+# ---------------------------------------------------------------------------
+
+def fix_unenroll_body_union(package_dir: str) -> int:
+    """Drop the non-JSON body types from the unenroll endpoint.
+
+    The platform schema declares three content types for ``POST
+    /v2/enrollment/unenroll/`` whose payloads are identical (``username: str``),
+    so the generator emits ``JsonBody``, ``DataBody`` and ``FilesBody`` and
+    accepts all three in the signature.
+
+    Bug 2 above keeps only the JSON branch in ``_get_kwargs``, which leaves the
+    other two types accepted but unserialised: passing either sends a POST with
+    no body and no ``Content-Type`` to a destructive endpoint, with no error.
+    Since the generated signature is what callers type against, the types are
+    removed rather than left as a silent trap.
+    """
+    api_path = os.path.join(
+        package_dir, "api", "openedx_platform_sdk", "v2_enrollment_unenroll_create.py"
+    )
+    models_init = os.path.join(package_dir, "models", "__init__.py")
+    stem = "v2_enrollment_unenroll_create"
+    dead = [f"V2EnrollmentUnenrollCreate{kind}Body" for kind in ("Data", "Files")]
+
+    patched = 0
+
+    if os.path.isfile(api_path):
+        text = open(api_path).read()
+        original = text
+        for name in dead:
+            snake = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+            text = text.replace(f"from ...models.{snake} import {name}\n", "")
+            text = text.replace(f"    | {name}\n", "")
+            text = text.replace(f"        body ({name} | Unset):\n", "")
+        if text != original:
+            open(api_path, "w").write(text)
+            print(f"  Removed non-JSON unenroll body types from {os.path.basename(api_path)}")
+        if not any(name in text for name in dead):
+            patched += 1
+
+    if os.path.isfile(models_init):
+        text = open(models_init).read()
+        original = text
+        for name in dead:
+            snake = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+            text = text.replace(f"from .{snake} import {name}\n", "")
+            text = text.replace(f'    "{name}",\n', "")
+        if text != original:
+            open(models_init, "w").write(text)
+            print("  Removed non-JSON unenroll body exports from models/__init__.py")
+        if not any(name in text for name in dead):
+            patched += 1
+
+    # The model modules themselves are now unreferenced.
+    for kind in ("data", "files"):
+        path = os.path.join(package_dir, "models", f"{stem}_{kind}_body.py")
+        if os.path.isfile(path):
+            os.remove(path)
+            print(f"  Deleted unused model {os.path.basename(path)}")
+
+    return patched
+
+
+# ---------------------------------------------------------------------------
+# Hand-written auth exports
+# ---------------------------------------------------------------------------
+
+def restore_auth_exports(package_dir: str) -> int:
+    """Re-add the hand-written ``auth`` exports to the generated ``__init__.py``.
+
+    ``auth.py`` is preserved across regeneration by ``regen_sdk.sh``, but the
+    generator rewrites ``__init__.py`` from the schema and so drops both the
+    import and the ``__all__`` entry for it.
+    """
+    path = os.path.join(package_dir, "__init__.py")
+    if not os.path.isfile(path):
+        print(f"  WARNING: {path} not found; skipping auth export restore")
+        return 0
+
+    text = open(path).read()
+    patched = 0
+
+    import_line = "from .auth import OAuth2ClientCredentials\n"
+    if import_line not in text:
+        if "from .client import" not in text:
+            print("  WARNING: no 'from .client import' in __init__.py; cannot place auth import")
+            return 0
+        text = text.replace("from .client import", import_line + "from .client import", 1)
+        patched += 1
+
+    if '"OAuth2ClientCredentials",' not in text:
+        if '"AuthenticatedClient",' not in text:
+            print('  WARNING: no "AuthenticatedClient" in __init__.py __all__; cannot add export')
+            return patched
+        text = text.replace(
+            '"AuthenticatedClient",',
+            '"AuthenticatedClient",\n    "OAuth2ClientCredentials",',
+            1,
+        )
+        patched += 1
+
+    if patched:
+        open(path, "w").write(text)
+        print("  Restored auth exports in __init__.py")
+    else:
+        patched = 2  # already present; re-running is a no-op
+
+    return patched
 
 
 # ---------------------------------------------------------------------------
@@ -256,14 +417,34 @@ def main() -> None:
         sys.exit(1)
 
     sdk_root = sys.argv[1]
-    api_dir = os.path.join(sdk_root, "openedx_platform_sdk", "api", "openedx_platform_sdk")
-    models_dir = os.path.join(sdk_root, "openedx_platform_sdk", "models")
+    package_dir = os.path.join(sdk_root, "openedx_platform_sdk")
+    api_dir = os.path.join(package_dir, "api", "openedx_platform_sdk")
+    models_dir = os.path.join(package_dir, "models")
 
-    fix_unset_import(api_dir)
-    fix_multipart_bug(api_dir)
-    fix_dict_safe_to_dict(models_dir)
-    fix_null_safe_datetime(models_dir)
-    fix_plain_list_enrollment_allowed(models_dir)
+    results = [
+        ("fix_unset_import", fix_unset_import(api_dir)),
+        ("fix_multipart_bug", fix_multipart_bug(api_dir)),
+        ("fix_dict_safe_to_dict", fix_dict_safe_to_dict(models_dir)),
+        ("fix_null_safe_datetime", fix_null_safe_datetime(models_dir)),
+        ("fix_plain_list_enrollment_allowed", fix_plain_list_enrollment_allowed(models_dir)),
+        ("fix_unenroll_body_union", fix_unenroll_body_union(package_dir)),
+        ("restore_auth_exports", restore_auth_exports(package_dir)),
+    ]
+
+    unapplied = [name for name, count in results if count == 0]
+    if unapplied:
+        print(
+            "\nERROR: the following post-processing steps patched nothing:\n"
+            + "\n".join(f"  - {name}" for name in unapplied)
+            + "\n\nThe generator's output shape has probably changed. Check whether"
+            "\nthe underlying bug is fixed upstream (in which case delete the step)"
+            "\nor whether it now needs a different pattern — do not ship the client"
+            "\nwithout resolving this.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    print("\n  All post-processing steps applied.")
 
 
 if __name__ == "__main__":

@@ -37,8 +37,6 @@ from .user_role import UserRole
 from .user_roles_response import UserRolesResponse
 from .v1_xblock_retrieve_view import V1XblockRetrieveView
 from .v2_enrollment_list_view import V2EnrollmentListView
-from .v2_enrollment_unenroll_create_data_body import V2EnrollmentUnenrollCreateDataBody
-from .v2_enrollment_unenroll_create_files_body import V2EnrollmentUnenrollCreateFilesBody
 from .v2_enrollment_unenroll_create_json_body import V2EnrollmentUnenrollCreateJsonBody
 from .v3_course_details_retrieve_view import V3CourseDetailsRetrieveView
 from .xblock import Xblock
@@ -86,8 +84,6 @@ __all__ = (
     "UserRolesResponse",
     "V1XblockRetrieveView",
     "V2EnrollmentListView",
-    "V2EnrollmentUnenrollCreateDataBody",
-    "V2EnrollmentUnenrollCreateFilesBody",
     "V2EnrollmentUnenrollCreateJsonBody",
     "V3CourseDetailsRetrieveView",
     "Xblock",

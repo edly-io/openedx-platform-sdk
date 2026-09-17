@@ -99,34 +99,35 @@ python "$FILTER_SCRIPT" "$CMS_SCHEMA_FILE" "$FILTERED_SCHEMA_FILE" "$SDK_TAG" --
 # ── 3. Regenerate the SDK ─────────────────────────────────────────────────────
 echo "→ Regenerating SDK..."
 
-# Preserve hand-written files before wiping the package directory.
-cp "$SCRIPT_DIR/openedx_platform_sdk/auth.py" /tmp/_sdk_auth.py 2>/dev/null || true
+# Everything below works out of a single scratch directory that is removed on
+# exit, however the script terminates.
+work_dir="$(mktemp -d)"
+trap 'rm -rf "$work_dir"' EXIT
 
-# Generate into a temp directory; openapi-python-client always creates a new
-# project folder — we only want the inner package directory.
-TMPDIR="$(mktemp -d)"
+# Preserve hand-written files before wiping the package directory.
+cp "$SCRIPT_DIR/openedx_platform_sdk/auth.py" "$work_dir/auth.py" 2>/dev/null || true
+
+# Generate into the scratch directory; openapi-python-client always creates a
+# new project folder — we only want the inner package directory.
+gen_dir="$work_dir/generated"
 openapi-python-client generate \
     --path "$FILTERED_SCHEMA_FILE" \
     --config "$CONFIG_FILE" \
-    --output-path "$TMPDIR" \
+    --output-path "$gen_dir" \
     --overwrite
 
 # Replace only the auto-generated package directory.
 rm -rf "$SCRIPT_DIR/openedx_platform_sdk"
-mv "$TMPDIR/openedx_platform_sdk" "$SCRIPT_DIR/openedx_platform_sdk"
-rm -rf "$TMPDIR"
+mv "$gen_dir/openedx_platform_sdk" "$SCRIPT_DIR/openedx_platform_sdk"
 
-# Restore hand-written files.
-if [[ -f /tmp/_sdk_auth.py ]]; then
-    cp /tmp/_sdk_auth.py "$SCRIPT_DIR/openedx_platform_sdk/auth.py"
-    # Re-add the auth export to __init__.py (openapi-python-client regenerates it without it).
-    sed -i '' 's/^from \.client import/from .auth import OAuth2ClientCredentials\nfrom .client import/' \
-        "$SCRIPT_DIR/openedx_platform_sdk/__init__.py"
-    sed -i '' 's/"AuthenticatedClient",/"AuthenticatedClient",\n    "OAuth2ClientCredentials",/' \
-        "$SCRIPT_DIR/openedx_platform_sdk/__init__.py"
+# Restore hand-written files. postprocess_sdk.py re-adds the auth exports to
+# __init__.py, which the generator rewrites without them.
+if [[ -f "$work_dir/auth.py" ]]; then
+    cp "$work_dir/auth.py" "$SCRIPT_DIR/openedx_platform_sdk/auth.py"
 fi
 
-# Apply all five generator-bug fixes (see postprocess_sdk.py for details).
+# Apply all five generator-bug fixes and restore the auth exports
+# (see postprocess_sdk.py for details).
 python "$SCRIPT_DIR/postprocess_sdk.py" "$SCRIPT_DIR"
 
 echo ""
