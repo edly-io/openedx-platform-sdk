@@ -26,3 +26,6 @@ dmypy.json
 /cms_schema.yml
 /lms_schema.yml
 /filtered_schema.yml
+
+# Sparse checkout of openedx-platform made by regenerate_sdk.yml
+/platform/

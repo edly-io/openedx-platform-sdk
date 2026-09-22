@@ -201,6 +201,9 @@ if __name__ == "__main__":
     merge_path = None
     if "--merge" in sys.argv:
         idx = sys.argv.index("--merge")
+        if idx + 1 >= len(sys.argv):
+            print("Error: --merge requires a schema path", file=sys.stderr)
+            sys.exit(1)
         merge_path = sys.argv[idx + 1]
 
     filter_schema(sys.argv[1], sys.argv[2], sys.argv[3], merge_path=merge_path)

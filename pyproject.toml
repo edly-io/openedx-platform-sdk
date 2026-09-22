@@ -1,32 +1,47 @@
-[tool.poetry]
+[project]
 name = "openedx-platform-sdk"
 version = "0.1.0"
 description = "A client library for accessing Authoring API"
 authors = []
 readme = "README.md"
-packages = [
-    { include = "openedx_platform_sdk" },
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.23.1,<0.29.0",
+    "attrs>=22.2.0",
 ]
-include = ["openedx_platform_sdk/py.typed"]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-httpx = ">=0.23.1,<0.29.0"
-attrs = ">=22.2.0"
-
-[tool.poetry.group.dev.dependencies]
-# Pinned exactly: the generator's output shape determines which fixes in
-# postprocess_sdk.py still apply, so a version bump is a deliberate change that
-# needs the regenerated client reviewed.
-openapi-python-client = "0.29.0"
-pyyaml = ">=6.0"
+[dependency-groups]
+dev = [
+    # Pinned exactly: the generator's output shape determines which fixes in
+    # postprocess_sdk.py still apply, so a version bump is a deliberate change
+    # that needs the regenerated client reviewed.
+    "openapi-python-client==0.29.0",
+    "pyyaml>=6.0",
+    # Declared explicitly even though openapi-python-client pulls it in: CI lints
+    # the generated output with it, and that shouldn't depend on the generator
+    # continuing to ship it.
+    "ruff>=0.16",
+]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["openedx_platform_sdk"]
+
+[tool.uv]
+# `uv sync` installs the dev group by default, which is what both CI and the
+# regeneration script need; nothing here should pull it in implicitly elsewhere.
+default-groups = ["dev"]
 
 [tool.ruff]
 line-length = 120
 
 [tool.ruff.lint]
 select = ["F", "I", "UP"]
+# UP042 (inherit from enum.StrEnum) is how openapi-python-client emits every
+# enum model. It is not auto-fixable, so leaving it enabled makes the lint step
+# in regenerate_sdk.yml fail on each run and the workflow never opens its PR.
+# Re-enable if the generator's output changes.
+ignore = ["UP042"]

@@ -55,22 +55,22 @@ jobs:
           sparse-checkout-cone-mode: false
 
       # -----------------------------------------------------------------------
-      # 3. Set up Python 3.12
+      # 3. Install uv (also provides the Python toolchain)
       # -----------------------------------------------------------------------
-      - name: Set up Python 3.12
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
-          python-version: "3.12"
+          enable-cache: true
 
       # -----------------------------------------------------------------------
       # 4. Install SDK generation dependencies
       # -----------------------------------------------------------------------
       - name: Install dependencies
-        # Installs the dev group from pyproject.toml so the generator version
-        # is pinned in one place rather than floating here.
-        run: |
-          pip install poetry
-          poetry install --only dev --no-root
+        # The dev group pins the generator in pyproject.toml rather than here,
+        # and --frozen fails the run if uv.lock has drifted from it. Later steps
+        # invoke the tools through `uv run`, so they resolve inside this
+        # environment instead of relying on what happens to be on PATH.
+        run: uv sync --frozen
 
       # -----------------------------------------------------------------------
       # 5. Record the platform revision these schemas came from
@@ -92,9 +92,7 @@ jobs:
       # 7. Lint and auto-fix with ruff
       # -----------------------------------------------------------------------
       - name: Lint and fix with ruff
-        run: |
-          pip install ruff
-          ruff check --fix .
+        run: uv run ruff check --fix .
 
       # -----------------------------------------------------------------------
       # 8. Open a PR if anything changed
@@ -140,3 +138,8 @@ jobs:
             - [ ] Confirm the schema versions look correct (check file
                   headers).
             - [ ] Run the test suite locally if the diff is large.
+          # Without this, create-pull-request commits every untracked change in
+          # the workspace — including platform/, the sparse checkout of
+          # openedx-platform made in step 2.
+          add-paths: |
+            openedx_platform_sdk/

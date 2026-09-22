@@ -7,7 +7,7 @@ Usage:
 Where <sdk_root> is the directory that contains the ``openedx_platform_sdk``
 package (i.e. the directory where ``regen_sdk.sh`` lives).
 
-The script applies five targeted fixes in order:
+The script applies six targeted fixes in order:
 
 1. fix_unset_import    — adds the missing ``Unset`` name to ``from ...types``
                          imports in API files that use it in type annotations.
@@ -27,15 +27,18 @@ The script applies five targeted fixes in order:
                                        against the endpoint returning a bare
                                        JSON array instead of the expected
                                        paginated envelope.
-
-Fixes 4 and 5 work around platform schema bugs rather than generator bugs:
-the schema described responses the API never returns. Both are fixed by
-https://github.com/openedx/openedx-platform/pull/39120 — once that merges and
-the committed schemas are regenerated, these two steps can be deleted.
 6. fix_unenroll_body_union — drops the non-JSON body types from the unenroll
                              endpoint, which fix 2 leaves accepted but
                              unserialised (a silent empty POST to a
                              destructive endpoint).
+
+Fixes 4 and 5 work around platform schema bugs rather than generator bugs:
+the schema described responses the API never returns. Both are fixed upstream
+by https://github.com/openedx/openedx-platform/pull/39120, merged 2026-09-22.
+They stay until the committed schemas are regenerated from a platform revision
+that includes it — the generated code here still carries the bugs until then.
+Once it is regenerated both steps will patch nothing, which fails the run by
+design, and that is the signal to delete them.
 
 It then restores the hand-written ``auth`` exports to ``__init__.py``, which
 the generator rewrites without them.
@@ -50,7 +53,6 @@ import glob
 import os
 import re
 import sys
-
 
 # ---------------------------------------------------------------------------
 # Bug 1
@@ -200,9 +202,10 @@ def fix_null_safe_datetime(models_dir: str) -> int:
     in the schema, but the API returns ``null`` for courses that have no dates
     set.  The bare ``fromisoformat`` call raises ``TypeError`` on ``None``.
 
-    Platform schema bug, not a generator bug. Fixed by
-    https://github.com/openedx/openedx-platform/pull/39120 — delete this step
-    once that has merged and the committed schemas are regenerated.
+    Platform schema bug, not a generator bug. Fixed upstream by
+    https://github.com/openedx/openedx-platform/pull/39120, merged 2026-09-22 —
+    delete this step once the committed schemas are regenerated from a platform
+    revision that includes it.
 
     Fix: split into a ``_raw_<var> = d.pop(...)`` step and a conditional
     ``fromisoformat`` that yields ``None`` when the raw value is not a string.
@@ -259,9 +262,10 @@ def fix_plain_list_enrollment_allowed(models_dir: str) -> int:
     ``PaginatedCourseEnrollmentAllowedList.from_dict()`` that converts the bare
     list into the envelope shape before the regular parsing runs.
 
-    Platform schema bug, not a generator bug. Fixed by
-    https://github.com/openedx/openedx-platform/pull/39120 — delete this step
-    once that has merged and the committed schemas are regenerated.
+    Platform schema bug, not a generator bug. Fixed upstream by
+    https://github.com/openedx/openedx-platform/pull/39120, merged 2026-09-22 —
+    delete this step once the committed schemas are regenerated from a platform
+    revision that includes it.
     """
     TARGET = "paginated_course_enrollment_allowed_list.py"
     MARKER = "        d = dict(src_dict)"
@@ -313,7 +317,12 @@ def fix_unenroll_body_union(package_dir: str) -> int:
     stem = "v2_enrollment_unenroll_create"
     dead = [f"V2EnrollmentUnenrollCreate{kind}Body" for kind in ("Data", "Files")]
 
-    patched = 0
+    # Each of the three halves must independently end up clean. They are tracked
+    # separately rather than through a shared counter: a shared one lets a half
+    # that silently matched nothing be covered by a half that succeeded, which
+    # ships a package whose ``__all__`` names modules that were deleted.
+    api_clean = False
+    init_clean = False
 
     if os.path.isfile(api_path):
         text = open(api_path).read()
@@ -326,8 +335,17 @@ def fix_unenroll_body_union(package_dir: str) -> int:
         if text != original:
             open(api_path, "w").write(text)
             print(f"  Removed non-JSON unenroll body types from {os.path.basename(api_path)}")
-        if not any(name in text for name in dead):
-            patched += 1
+        # True whether this run removed them or an earlier run already did.
+        api_clean = not any(name in text for name in dead)
+        if not api_clean:
+            remaining = sorted(name for name in dead if name in text)
+            print(
+                f"  ERROR: {os.path.basename(api_path)} still references {', '.join(remaining)} "
+                "— the generator's output shape changed and the patterns above no longer match.",
+                file=sys.stderr,
+            )
+    else:
+        print(f"  ERROR: {api_path} is missing.", file=sys.stderr)
 
     if os.path.isfile(models_init):
         text = open(models_init).read()
@@ -339,17 +357,35 @@ def fix_unenroll_body_union(package_dir: str) -> int:
         if text != original:
             open(models_init, "w").write(text)
             print("  Removed non-JSON unenroll body exports from models/__init__.py")
-        if not any(name in text for name in dead):
-            patched += 1
+        init_clean = not any(name in text for name in dead)
+        if not init_clean:
+            remaining = sorted(name for name in dead if name in text)
+            print(
+                f"  ERROR: models/__init__.py still references {', '.join(remaining)} "
+                "— check the import and __all__ formatting the generator emits.",
+                file=sys.stderr,
+            )
+    else:
+        print(f"  ERROR: {models_init} is missing.", file=sys.stderr)
 
-    # The model modules themselves are now unreferenced.
+    # Only unreferenced modules may be deleted. Deleting them while either half
+    # above still names them produces a package that fails on import, so the
+    # deletion is gated on both halves being clean.
+    if not (api_clean and init_clean):
+        return 0
+
+    models_removed = 0
     for kind in ("data", "files"):
         path = os.path.join(package_dir, "models", f"{stem}_{kind}_body.py")
         if os.path.isfile(path):
             os.remove(path)
             print(f"  Deleted unused model {os.path.basename(path)}")
+            models_removed += 1
+        else:
+            # Already gone from an earlier run — the end state is what matters.
+            models_removed += 1
 
-    return patched
+    return 1 if models_removed == 2 else 0
 
 
 # ---------------------------------------------------------------------------

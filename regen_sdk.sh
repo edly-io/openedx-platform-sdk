@@ -20,9 +20,16 @@
 #        ./regen_sdk.sh
 #
 # Requirements:
-#   pip install openapi-python-client pyyaml
+#   uv (https://docs.astral.sh/uv/) — the generator and PyYAML are pinned in
+#   pyproject.toml's dev group, so this script runs them through `uv run`
+#   rather than expecting anything preinstalled on PATH.
 
 set -euo pipefail
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "Error: uv is required but not installed — see https://docs.astral.sh/uv/getting-started/installation/" >&2
+    exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FILTERED_SCHEMA_FILE="$SCRIPT_DIR/filtered_schema.yml"
@@ -94,7 +101,7 @@ fi
 
 # ── 2. Filter and merge both schemas ──────────────────────────────────────────
 echo "→ Filtering and merging schemas for tag '$SDK_TAG'..."
-python "$FILTER_SCRIPT" "$CMS_SCHEMA_FILE" "$FILTERED_SCHEMA_FILE" "$SDK_TAG" --merge "$LMS_SCHEMA_FILE"
+uv run python "$FILTER_SCRIPT" "$CMS_SCHEMA_FILE" "$FILTERED_SCHEMA_FILE" "$SDK_TAG" --merge "$LMS_SCHEMA_FILE"
 
 # ── 3. Regenerate the SDK ─────────────────────────────────────────────────────
 echo "→ Regenerating SDK..."
@@ -110,7 +117,7 @@ cp "$SCRIPT_DIR/openedx_platform_sdk/auth.py" "$work_dir/auth.py" 2>/dev/null ||
 # Generate into the scratch directory; openapi-python-client always creates a
 # new project folder — we only want the inner package directory.
 gen_dir="$work_dir/generated"
-openapi-python-client generate \
+uv run openapi-python-client generate \
     --path "$FILTERED_SCHEMA_FILE" \
     --config "$CONFIG_FILE" \
     --output-path "$gen_dir" \
@@ -126,9 +133,9 @@ if [[ -f "$work_dir/auth.py" ]]; then
     cp "$work_dir/auth.py" "$SCRIPT_DIR/openedx_platform_sdk/auth.py"
 fi
 
-# Apply all five generator-bug fixes and restore the auth exports
+# Apply all six post-processing fixes and restore the auth exports
 # (see postprocess_sdk.py for details).
-python "$SCRIPT_DIR/postprocess_sdk.py" "$SCRIPT_DIR"
+uv run python "$SCRIPT_DIR/postprocess_sdk.py" "$SCRIPT_DIR"
 
 echo ""
 echo "✓ SDK regenerated successfully."

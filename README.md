@@ -25,8 +25,12 @@ The SDK is generated from the platform's OpenAPI schema. Run this whenever APIs 
 
 ### Prerequisites
 
+[uv](https://docs.astral.sh/uv/getting-started/installation/). The generator,
+PyYAML and ruff are pinned in `pyproject.toml`'s dev group, and `regen_sdk.sh`
+runs them through `uv run`, so there is nothing else to install:
+
 ```bash
-pip install openapi-python-client pyyaml
+uv sync --frozen
 ```
 
 ### Steps
@@ -149,7 +153,7 @@ with client as client:
 
 ```bash
 cd openedx-platform-sdk
-pip install -e .
+uv sync --frozen
 ```
 
 ### 2. Create an OAuth2 application in LMS
@@ -171,6 +175,7 @@ from openedx_platform_sdk.api.openedx_platform_sdk import v3_home_retrieve
 
 auth = OAuth2ClientCredentials(
     lms_url="http://local.openedx.io:8000",
+    studio_url="http://studio.local.openedx.io:8001",
     client_id="your-client-id",
     client_secret="your-client-secret",
 )
@@ -192,11 +197,11 @@ For typed usage examples covering all API groups (Home v3/v4, Course Details, Au
 ## Installation
 
 ```bash
-# From source
-pip install .
+# As a dependency of another project
+uv add openedx-platform-sdk
 
-# With Poetry
-poetry install
+# From a source checkout, for development
+uv sync --frozen
 ```
 
 ---
@@ -204,5 +209,6 @@ poetry install
 ## Publishing
 
 ```bash
-poetry publish --build
+uv build
+uv publish
 ```
