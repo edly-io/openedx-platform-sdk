@@ -21,8 +21,13 @@
 #
 # Requirements:
 #   uv (https://docs.astral.sh/uv/) — the generator and PyYAML are pinned in
-#   pyproject.toml's dev group, so this script runs them through `uv run`
-#   rather than expecting anything preinstalled on PATH.
+#   pyproject.toml's dev group, so this script runs them through
+#   `uv run --locked --project "$SCRIPT_DIR"` rather than expecting anything
+#   preinstalled on PATH. --project because uv resolves from the working
+#   directory otherwise, which picks up whatever environment the caller
+#   happens to be in when the script is invoked by path from elsewhere;
+#   --locked because a bare `uv run` re-resolves and rewrites uv.lock, which
+#   can install a different generator than pyproject.toml pins.
 
 set -euo pipefail
 
@@ -101,7 +106,7 @@ fi
 
 # ── 2. Filter and merge both schemas ──────────────────────────────────────────
 echo "→ Filtering and merging schemas for tag '$SDK_TAG'..."
-uv run python "$FILTER_SCRIPT" "$CMS_SCHEMA_FILE" "$FILTERED_SCHEMA_FILE" "$SDK_TAG" --merge "$LMS_SCHEMA_FILE"
+uv run --locked --project "$SCRIPT_DIR" python "$FILTER_SCRIPT" "$CMS_SCHEMA_FILE" "$FILTERED_SCHEMA_FILE" "$SDK_TAG" --merge "$LMS_SCHEMA_FILE"
 
 # ── 3. Regenerate the SDK ─────────────────────────────────────────────────────
 echo "→ Regenerating SDK..."
@@ -117,7 +122,7 @@ cp "$SCRIPT_DIR/openedx_platform_sdk/auth.py" "$work_dir/auth.py" 2>/dev/null ||
 # Generate into the scratch directory; openapi-python-client always creates a
 # new project folder — we only want the inner package directory.
 gen_dir="$work_dir/generated"
-uv run openapi-python-client generate \
+uv run --locked --project "$SCRIPT_DIR" openapi-python-client generate \
     --path "$FILTERED_SCHEMA_FILE" \
     --config "$CONFIG_FILE" \
     --output-path "$gen_dir" \
@@ -135,7 +140,7 @@ fi
 
 # Apply all six post-processing fixes and restore the auth exports
 # (see postprocess_sdk.py for details).
-uv run python "$SCRIPT_DIR/postprocess_sdk.py" "$SCRIPT_DIR"
+uv run --locked --project "$SCRIPT_DIR" python "$SCRIPT_DIR/postprocess_sdk.py" "$SCRIPT_DIR"
 
 echo ""
 echo "✓ SDK regenerated successfully."

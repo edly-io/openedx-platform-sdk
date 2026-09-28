@@ -66,11 +66,13 @@ jobs:
       # 4. Install SDK generation dependencies
       # -----------------------------------------------------------------------
       - name: Install dependencies
-        # The dev group pins the generator in pyproject.toml rather than here,
-        # and --frozen fails the run if uv.lock has drifted from it. Later steps
-        # invoke the tools through `uv run`, so they resolve inside this
-        # environment instead of relying on what happens to be on PATH.
-        run: uv sync --frozen
+        # The dev group pins the generator in pyproject.toml rather than here.
+        # --locked, not --frozen: --frozen installs uv.lock without checking it
+        # against pyproject.toml, so a changed pin would be silently ignored and
+        # the generator would not actually be pinned. Later steps invoke the
+        # tools through `uv run`, so they resolve inside this environment
+        # instead of relying on what happens to be on PATH.
+        run: uv sync --locked
 
       # -----------------------------------------------------------------------
       # 5. Record the platform revision these schemas came from
@@ -92,7 +94,7 @@ jobs:
       # 7. Lint and auto-fix with ruff
       # -----------------------------------------------------------------------
       - name: Lint and fix with ruff
-        run: uv run ruff check --fix .
+        run: uv run --locked ruff check --fix .
 
       # -----------------------------------------------------------------------
       # 8. Open a PR if anything changed
