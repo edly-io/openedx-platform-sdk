@@ -1,0 +1,4 @@
+project_name_override: openedx-platform-sdk
+package_name_override: openedx_platform_sdk
+include_tags:
+  - openedx-platform-sdk
