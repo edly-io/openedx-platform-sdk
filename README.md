@@ -30,7 +30,7 @@ PyYAML and ruff are pinned in `pyproject.toml`'s dev group, and `regen_sdk.sh`
 runs them through `uv run`, so there is nothing else to install:
 
 ```bash
-uv sync --frozen
+uv sync --locked
 ```
 
 ### Steps
@@ -153,7 +153,7 @@ with client as client:
 
 ```bash
 cd openedx-platform-sdk
-uv sync --frozen
+uv sync --locked
 ```
 
 ### 2. Create an OAuth2 application in LMS
@@ -201,7 +201,7 @@ For typed usage examples covering all API groups (Home v3/v4, Course Details, Au
 uv add openedx-platform-sdk
 
 # From a source checkout, for development
-uv sync --frozen
+uv sync --locked
 ```
 
 ---
