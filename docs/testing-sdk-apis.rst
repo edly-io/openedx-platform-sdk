@@ -39,10 +39,10 @@ Install the SDK in editable mode and configure credentials:
 .. note::
 
    ``lms_url`` and ``studio_url`` are both plain service roots, with no API
-   prefix. Each helper appends its own: ``get_studio_client()`` targets
-   ``{studio_url}/api/contentstore`` and ``get_lms_client()`` targets
-   ``{lms_url}/api/enrollment``. Both take an ``api_prefix`` argument to reach
-   a different tagged namespace on the same service.
+   prefix. Every generated path carries its own
+   (``/api/contentstore/v3/home/``, ``/api/enrollment/v2/enrollment/``), so
+   ``get_studio_client()`` and ``get_lms_client()`` use those roots as the base
+   URL and one client reaches every namespace on its service.
 
 ----
 
@@ -340,18 +340,18 @@ Enrollment v2
    Enrollment APIs live in LMS (``openedx.core.djangoapps.enrollments``).
    The SDK schema is generated from both Studio and LMS and merged at build time.
 
-   Use ``auth.get_lms_client()`` for all enrollment calls — it automatically
-   targets ``{lms_url}/api/enrollment``.
+   Use ``auth.get_lms_client()`` for all enrollment calls — its base URL is
+   ``lms_url``, and the generated paths start with ``/api/enrollment/``.
 
 List enrollments for the authenticated user
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-    from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollment_list
+    from openedx_platform_sdk.api.openedx_platform_sdk import api_enrollment_v2_enrollment_list
 
     with auth.get_lms_client() as enroll_client:
-        result = v2_enrollment_list.sync(client=enroll_client)
+        result = api_enrollment_v2_enrollment_list.sync(client=enroll_client)
         print(result.count)
         for enrollment in result.results:
             print(enrollment.is_active, enrollment.mode)
@@ -361,12 +361,12 @@ Get course enrollment details
 
 .. code-block:: python
 
-    from openedx_platform_sdk.api.openedx_platform_sdk import v2_course_retrieve
+    from openedx_platform_sdk.api.openedx_platform_sdk import api_enrollment_v2_course_retrieve
 
     COURSE_KEY = "course-v1:org+course+run"
 
     with auth.get_lms_client() as enroll_client:
-        course = v2_course_retrieve.sync(course_id=COURSE_KEY, client=enroll_client)
+        course = api_enrollment_v2_course_retrieve.sync(course_id=COURSE_KEY, client=enroll_client)
         print(course.course_id)
         print(course.invite_only)
 
@@ -375,10 +375,10 @@ Get user roles
 
 .. code-block:: python
 
-    from openedx_platform_sdk.api.openedx_platform_sdk import v2_roles_retrieve
+    from openedx_platform_sdk.api.openedx_platform_sdk import api_enrollment_v2_roles_retrieve
 
     with auth.get_lms_client() as enroll_client:
-        roles = v2_roles_retrieve.sync(client=enroll_client)
+        roles = api_enrollment_v2_roles_retrieve.sync(client=enroll_client)
         print(roles.roles)
 
 Admin enrollment list
@@ -386,10 +386,10 @@ Admin enrollment list
 
 .. code-block:: python
 
-    from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollments_list
+    from openedx_platform_sdk.api.openedx_platform_sdk import api_enrollment_v2_enrollments_list
 
     with auth.get_lms_client() as enroll_client:
-        result = v2_enrollments_list.sync(client=enroll_client, course_id=COURSE_KEY)
+        result = api_enrollment_v2_enrollments_list.sync(client=enroll_client, course_id=COURSE_KEY)
         for item in result.results:
             print(item.user, item.mode, item.is_active)
 
@@ -400,8 +400,8 @@ Enroll and retrieve
 
     import datetime
     from openedx_platform_sdk.api.openedx_platform_sdk import (
-        v2_enrollment_create,
-        v2_enrollment_retrieve,
+        api_enrollment_v2_enrollment_create,
+        api_enrollment_v2_enrollment_retrieve,
     )
     from openedx_platform_sdk.models.course_enrollment import CourseEnrollment
     from openedx_platform_sdk.models.enrollment_course import EnrollmentCourse
@@ -420,10 +420,10 @@ Enroll and retrieve
     )
 
     with auth.get_lms_client() as enroll_client:
-        resp = v2_enrollment_create.sync_detailed(client=enroll_client, body=body)
+        resp = api_enrollment_v2_enrollment_create.sync_detailed(client=enroll_client, body=body)
         print(resp.status_code.value)   # 200
 
-        enrollment = v2_enrollment_retrieve.sync(
+        enrollment = api_enrollment_v2_enrollment_retrieve.sync(
             client=enroll_client, username="your-lms-username", course_id=COURSE_KEY
         )
         print(enrollment.is_active)     # True

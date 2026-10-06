@@ -138,7 +138,7 @@ if [[ -f "$work_dir/auth.py" ]]; then
     cp "$work_dir/auth.py" "$SCRIPT_DIR/openedx_platform_sdk/auth.py"
 fi
 
-# Apply all six post-processing fixes and restore the auth exports
+# Apply all five post-processing fixes and restore the auth exports
 # (see postprocess_sdk.py for details).
 uv run --locked --project "$SCRIPT_DIR" python "$SCRIPT_DIR/postprocess_sdk.py" "$SCRIPT_DIR"
 

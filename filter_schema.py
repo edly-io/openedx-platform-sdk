@@ -4,9 +4,15 @@ Filter an OpenAPI schema to only include paths tagged with a specific tag.
 Recursively resolves all $ref dependencies so the filtered schema is self-contained.
 Optionally merges a second schema (e.g. LMS enrollment schema) before filtering.
 
+Every path in the output is relative to the service root, so the generated
+client takes a bare service URL (``https://studio.example.com``) as its base.
+A base schema published with its prefix trimmed has that prefix restored first
+(``--base-prefix``, default ``/api/contentstore``).
+
 Usage:
     python filter_schema.py schema.yml filtered_schema.yml openedx-platform-sdk
     python filter_schema.py schema.yml filtered_schema.yml openedx-platform-sdk --merge lms_schema.yml
+    python filter_schema.py schema.yml filtered_schema.yml openedx-platform-sdk --base-prefix /api/contentstore
 """
 
 import sys
@@ -45,6 +51,35 @@ def resolve_all_refs(names: set, components: dict) -> set:
                 if dep not in resolved:
                     queue.append(dep)
     return resolved
+
+
+DEFAULT_BASE_PREFIX = "/api/contentstore"
+
+
+def restore_trimmed_prefix(schema: dict, prefix: str) -> None:
+    """Prefix every path that was published relative to an API namespace.
+
+    The platform's Studio schema was historically generated with
+    ``SCHEMA_PATH_PREFIX_TRIM`` set, so its paths read ``/v1/xblock/`` rather
+    than ``/api/contentstore/v1/xblock/`` and consumers had to put the prefix in
+    their base URL. The LMS schema, and the Studio schema once the platform
+    stops trimming it, publish full paths. Restoring the prefix here gives the
+    client one rule for both services, whichever form the platform publishes.
+
+    A path is treated as trimmed when it does not start with ``/api/``. When no
+    path is trimmed this is a no-op, and it says so: that is the signal the
+    platform has stopped trimming and this step can be deleted.
+    """
+    paths = schema.get("paths", {})
+    trimmed = [path for path in paths if not path.startswith("/api/")]
+    if not trimmed:
+        print(f"  No trimmed paths in the base schema; '{prefix}' not applied.")
+        return
+    schema["paths"] = {
+        (prefix.rstrip("/") + path if path in trimmed else path): item
+        for path, item in paths.items()
+    }
+    print(f"Restored the trimmed prefix '{prefix}' on {len(trimmed)} base schema path(s).")
 
 
 def merge_schema(base: dict, extra: dict) -> dict:
@@ -139,9 +174,17 @@ def fix_path_parameters(paths: dict) -> None:
             print(f"  - {method} {path}: {', '.join(names)}")
 
 
-def filter_schema(input_path: str, output_path: str, tag: str, merge_path: str | None = None) -> None:
+def filter_schema(
+    input_path: str,
+    output_path: str,
+    tag: str,
+    merge_path: str | None = None,
+    base_prefix: str = DEFAULT_BASE_PREFIX,
+) -> None:
     with open(input_path) as f:
         schema = yaml.safe_load(f)
+
+    restore_trimmed_prefix(schema, base_prefix)
 
     # Optionally merge a second schema before filtering
     if merge_path:
@@ -165,7 +208,7 @@ def filter_schema(input_path: str, output_path: str, tag: str, merge_path: str |
     schema["paths"] = filtered_paths
 
     # Fix: remove path parameters declared but absent from the URL template
-    # (e.g. /v2/enrollment/{course_id} incorrectly declares "username" as a path param)
+    # (e.g. /api/enrollment/v2/enrollment/{course_id} incorrectly declares "username" as a path param)
     fix_path_parameters(filtered_paths)
 
     # 2. Collect all $refs used directly in filtered paths
@@ -195,15 +238,25 @@ def filter_schema(input_path: str, output_path: str, tag: str, merge_path: str |
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print(f"Usage: {sys.argv[0]} <input_schema> <output_schema> <tag> [--merge <extra_schema>]")
+        print(
+            f"Usage: {sys.argv[0]} <input_schema> <output_schema> <tag> "
+            "[--merge <extra_schema>] [--base-prefix <prefix>]"
+        )
         sys.exit(1)
 
-    merge_path = None
-    if "--merge" in sys.argv:
-        idx = sys.argv.index("--merge")
+    def _option(name: str, default: str | None) -> str | None:
+        if name not in sys.argv:
+            return default
+        idx = sys.argv.index(name)
         if idx + 1 >= len(sys.argv):
-            print("Error: --merge requires a schema path", file=sys.stderr)
+            print(f"Error: {name} requires a value", file=sys.stderr)
             sys.exit(1)
-        merge_path = sys.argv[idx + 1]
+        return sys.argv[idx + 1]
 
-    filter_schema(sys.argv[1], sys.argv[2], sys.argv[3], merge_path=merge_path)
+    filter_schema(
+        sys.argv[1],
+        sys.argv[2],
+        sys.argv[3],
+        merge_path=_option("--merge", None),
+        base_prefix=_option("--base-prefix", DEFAULT_BASE_PREFIX),
+    )
