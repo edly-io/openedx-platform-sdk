@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import datetime
-import json
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -11,31 +10,25 @@ from attrs import field as _attrs_field
 from .. import types
 from ..types import UNSET, Unset
 
-if TYPE_CHECKING:
-    from ..models.enrollment_course import EnrollmentCourse
-
-
 T = TypeVar("T", bound="CourseEnrollment")
 
 
 @_attrs_define
 class CourseEnrollment:
-    """Serializes CourseEnrollment models
-
-    Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-    the Course block and course modes, to give a complete representation of course enrollment.
+    """Serializes CourseEnrollment model and returns a subset of fields returned
+    by the CourseEnrollmentSerializer.
 
         Attributes:
             created (datetime.datetime | None):
-            course_details (EnrollmentCourse): Serialize a course block and related information.
             user (str):
+            course_id (str):
             mode (str | Unset):
             is_active (bool | Unset):
     """
 
     created: datetime.datetime | None
-    course_details: EnrollmentCourse
     user: str
+    course_id: str
     mode: str | Unset = UNSET
     is_active: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -47,9 +40,9 @@ class CourseEnrollment:
         else:
             created = self.created
 
-        course_details = self.course_details.to_dict()
-
         user = self.user
+
+        course_id = self.course_id
 
         mode = self.mode
 
@@ -60,8 +53,8 @@ class CourseEnrollment:
         field_dict.update(
             {
                 "created": created,
-                "course_details": course_details,
                 "user": user,
+                "course_id": course_id,
             }
         )
         if mode is not UNSET:
@@ -79,9 +72,9 @@ class CourseEnrollment:
         else:
             files.append(("created", (None, str(self.created).encode(), "text/plain")))
 
-        files.append(("course_details", (None, json.dumps(self.course_details.to_dict()).encode(), "application/json")))
-
         files.append(("user", (None, str(self.user).encode(), "text/plain")))
+
+        files.append(("course_id", (None, str(self.course_id).encode(), "text/plain")))
 
         if not isinstance(self.mode, Unset):
             files.append(("mode", (None, str(self.mode).encode(), "text/plain")))
@@ -96,8 +89,6 @@ class CourseEnrollment:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.enrollment_course import EnrollmentCourse
-
         d = dict(src_dict)
 
         def _parse_created(data: object) -> datetime.datetime | None:
@@ -115,9 +106,9 @@ class CourseEnrollment:
 
         created = _parse_created(d.pop("created"))
 
-        course_details = EnrollmentCourse.from_dict(d.pop("course_details"))
-
         user = d.pop("user")
+
+        course_id = d.pop("course_id")
 
         mode = d.pop("mode", UNSET)
 
@@ -125,8 +116,8 @@ class CourseEnrollment:
 
         course_enrollment = cls(
             created=created,
-            course_details=course_details,
             user=user,
+            course_id=course_id,
             mode=mode,
             is_active=is_active,
         )

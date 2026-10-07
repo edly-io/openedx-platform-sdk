@@ -19,21 +19,17 @@ T = TypeVar("T", bound="PaginatedCourseEnrollmentList")
 class PaginatedCourseEnrollmentList:
     """
     Attributes:
-        count (int):  Example: 123.
         results (list[CourseEnrollment]):
-        next_ (None | str | Unset):  Example: http://api.example.org/accounts/?page=4.
-        previous (None | str | Unset):  Example: http://api.example.org/accounts/?page=2.
+        next_ (None | str | Unset):  Example: http://api.example.org/accounts/?cursor=cD00ODY%3D".
+        previous (None | str | Unset):  Example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3.
     """
 
-    count: int
     results: list[CourseEnrollment]
     next_: None | str | Unset = UNSET
     previous: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        count = self.count
-
         results = []
         for results_item_data in self.results:
             results_item = results_item_data.to_dict()
@@ -55,7 +51,6 @@ class PaginatedCourseEnrollmentList:
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "count": count,
                 "results": results,
             }
         )
@@ -71,8 +66,6 @@ class PaginatedCourseEnrollmentList:
         from ..models.course_enrollment import CourseEnrollment
 
         d = dict(src_dict)
-        count = d.pop("count")
-
         results = []
         _results = d.pop("results")
         for results_item_data in _results:
@@ -99,7 +92,6 @@ class PaginatedCourseEnrollmentList:
         previous = _parse_previous(d.pop("previous", UNSET))
 
         paginated_course_enrollment_list = cls(
-            count=count,
             results=results,
             next_=next_,
             previous=previous,

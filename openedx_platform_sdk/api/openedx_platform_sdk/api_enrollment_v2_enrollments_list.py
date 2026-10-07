@@ -6,37 +6,47 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.paginated_course_enrollment_list import PaginatedCourseEnrollmentList
-from ...models.v2_enrollment_list_view import V2EnrollmentListView
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
+    course_id: str | Unset = UNSET,
+    course_ids: str | Unset = UNSET,
+    course_key: str | Unset = UNSET,
+    course_keys: str | Unset = UNSET,
+    email: str | Unset = UNSET,
+    ordering: str | Unset = UNSET,
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
-    user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    username: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
+
+    params["course_id"] = course_id
+
+    params["course_ids"] = course_ids
+
+    params["course_key"] = course_key
+
+    params["course_keys"] = course_keys
+
+    params["email"] = email
+
+    params["ordering"] = ordering
 
     params["page"] = page
 
     params["page_size"] = page_size
 
-    params["user"] = user
-
-    json_view: str | Unset = UNSET
-    if not isinstance(view, Unset):
-        json_view = view.value
-
-    params["view"] = json_view
+    params["username"] = username
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/v2/enrollment/",
+        "url": "/api/enrollment/v2/enrollments/",
         "params": params,
     }
 
@@ -51,9 +61,17 @@ def _parse_response(
 
         return response_200
 
+    if response.status_code == 400:
+        response_400 = cast(Any, None)
+        return response_400
+
     if response.status_code == 401:
         response_401 = cast(Any, None)
         return response_401
+
+    if response.status_code == 403:
+        response_403 = cast(Any, None)
+        return response_403
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -75,23 +93,31 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
+    course_id: str | Unset = UNSET,
+    course_ids: str | Unset = UNSET,
+    course_key: str | Unset = UNSET,
+    course_keys: str | Unset = UNSET,
+    email: str | Unset = UNSET,
+    ordering: str | Unset = UNSET,
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
-    user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    username: str | Unset = UNSET,
 ) -> Response[Any | PaginatedCourseEnrollmentList]:
-    """List enrollments for a user (paginated)
+    """List all course enrollments (admin-only, paginated)
 
-     Returns a paginated list of enrollments for the currently logged-in user, or for the user named by
-    the 'user' query parameter. Staff/admin/api-key access is required to view another user's
-    enrollments — otherwise the list is filtered to courses the requester staffs. Supports the ADR 0036
-    ``?view=minimal`` preset (see parameter description).
+     Admin-only paginated list of CourseEnrollment records, optionally filtered by course_key,
+    course_keys, username, or email, and optionally ordered.
 
     Args:
+        course_id (str | Unset):
+        course_ids (str | Unset):
+        course_key (str | Unset):
+        course_keys (str | Unset):
+        email (str | Unset):
+        ordering (str | Unset):
         page (str | Unset):
         page_size (str | Unset):
-        user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        username (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -102,10 +128,15 @@ def sync_detailed(
     """
 
     kwargs = _get_kwargs(
+        course_id=course_id,
+        course_ids=course_ids,
+        course_key=course_key,
+        course_keys=course_keys,
+        email=email,
+        ordering=ordering,
         page=page,
         page_size=page_size,
-        user=user,
-        view=view,
+        username=username,
     )
 
     response = client.get_httpx_client().request(
@@ -118,23 +149,31 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient | Client,
+    course_id: str | Unset = UNSET,
+    course_ids: str | Unset = UNSET,
+    course_key: str | Unset = UNSET,
+    course_keys: str | Unset = UNSET,
+    email: str | Unset = UNSET,
+    ordering: str | Unset = UNSET,
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
-    user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    username: str | Unset = UNSET,
 ) -> Any | PaginatedCourseEnrollmentList | None:
-    """List enrollments for a user (paginated)
+    """List all course enrollments (admin-only, paginated)
 
-     Returns a paginated list of enrollments for the currently logged-in user, or for the user named by
-    the 'user' query parameter. Staff/admin/api-key access is required to view another user's
-    enrollments — otherwise the list is filtered to courses the requester staffs. Supports the ADR 0036
-    ``?view=minimal`` preset (see parameter description).
+     Admin-only paginated list of CourseEnrollment records, optionally filtered by course_key,
+    course_keys, username, or email, and optionally ordered.
 
     Args:
+        course_id (str | Unset):
+        course_ids (str | Unset):
+        course_key (str | Unset):
+        course_keys (str | Unset):
+        email (str | Unset):
+        ordering (str | Unset):
         page (str | Unset):
         page_size (str | Unset):
-        user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        username (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -146,33 +185,46 @@ def sync(
 
     return sync_detailed(
         client=client,
+        course_id=course_id,
+        course_ids=course_ids,
+        course_key=course_key,
+        course_keys=course_keys,
+        email=email,
+        ordering=ordering,
         page=page,
         page_size=page_size,
-        user=user,
-        view=view,
+        username=username,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
+    course_id: str | Unset = UNSET,
+    course_ids: str | Unset = UNSET,
+    course_key: str | Unset = UNSET,
+    course_keys: str | Unset = UNSET,
+    email: str | Unset = UNSET,
+    ordering: str | Unset = UNSET,
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
-    user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    username: str | Unset = UNSET,
 ) -> Response[Any | PaginatedCourseEnrollmentList]:
-    """List enrollments for a user (paginated)
+    """List all course enrollments (admin-only, paginated)
 
-     Returns a paginated list of enrollments for the currently logged-in user, or for the user named by
-    the 'user' query parameter. Staff/admin/api-key access is required to view another user's
-    enrollments — otherwise the list is filtered to courses the requester staffs. Supports the ADR 0036
-    ``?view=minimal`` preset (see parameter description).
+     Admin-only paginated list of CourseEnrollment records, optionally filtered by course_key,
+    course_keys, username, or email, and optionally ordered.
 
     Args:
+        course_id (str | Unset):
+        course_ids (str | Unset):
+        course_key (str | Unset):
+        course_keys (str | Unset):
+        email (str | Unset):
+        ordering (str | Unset):
         page (str | Unset):
         page_size (str | Unset):
-        user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        username (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -183,10 +235,15 @@ async def asyncio_detailed(
     """
 
     kwargs = _get_kwargs(
+        course_id=course_id,
+        course_ids=course_ids,
+        course_key=course_key,
+        course_keys=course_keys,
+        email=email,
+        ordering=ordering,
         page=page,
         page_size=page_size,
-        user=user,
-        view=view,
+        username=username,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -197,23 +254,31 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
+    course_id: str | Unset = UNSET,
+    course_ids: str | Unset = UNSET,
+    course_key: str | Unset = UNSET,
+    course_keys: str | Unset = UNSET,
+    email: str | Unset = UNSET,
+    ordering: str | Unset = UNSET,
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
-    user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    username: str | Unset = UNSET,
 ) -> Any | PaginatedCourseEnrollmentList | None:
-    """List enrollments for a user (paginated)
+    """List all course enrollments (admin-only, paginated)
 
-     Returns a paginated list of enrollments for the currently logged-in user, or for the user named by
-    the 'user' query parameter. Staff/admin/api-key access is required to view another user's
-    enrollments — otherwise the list is filtered to courses the requester staffs. Supports the ADR 0036
-    ``?view=minimal`` preset (see parameter description).
+     Admin-only paginated list of CourseEnrollment records, optionally filtered by course_key,
+    course_keys, username, or email, and optionally ordered.
 
     Args:
+        course_id (str | Unset):
+        course_ids (str | Unset):
+        course_key (str | Unset):
+        course_keys (str | Unset):
+        email (str | Unset):
+        ordering (str | Unset):
         page (str | Unset):
         page_size (str | Unset):
-        user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        username (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -226,9 +291,14 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
+            course_id=course_id,
+            course_ids=course_ids,
+            course_key=course_key,
+            course_keys=course_keys,
+            email=email,
+            ordering=ordering,
             page=page,
             page_size=page_size,
-            user=user,
-            view=view,
+            username=username,
         )
     ).parsed

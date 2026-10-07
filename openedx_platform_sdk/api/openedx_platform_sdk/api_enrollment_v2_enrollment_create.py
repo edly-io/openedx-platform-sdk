@@ -17,7 +17,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/v2/enrollment/",
+        "url": "/api/enrollment/v2/enrollment/",
     }
 
     if isinstance(body, CourseEnrollment):
@@ -75,18 +75,15 @@ def sync_detailed(
     course_details.course_id.
 
     Args:
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -119,18 +116,15 @@ def sync(
     course_details.course_id.
 
     Args:
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -158,18 +152,15 @@ async def asyncio_detailed(
     course_details.course_id.
 
     Args:
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -200,18 +191,15 @@ async def asyncio(
     course_details.course_id.
 
     Args:
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
-        body (CourseEnrollment): Serializes CourseEnrollment models
-
-            Aggregates all data from the Course Enrollment table, and pulls in the serialization for
-            the Course block and course modes, to give a complete representation of course enrollment.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
+        body (CourseEnrollment): Serializes CourseEnrollment model and returns a subset of fields
+            returned
+            by the CourseEnrollmentSerializer.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

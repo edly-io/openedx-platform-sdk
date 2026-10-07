@@ -6,11 +6,11 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="V2EnrollmentUnenrollCreateJsonBody")
+T = TypeVar("T", bound="ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody")
 
 
 @_attrs_define
-class V2EnrollmentUnenrollCreateJsonBody:
+class ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody:
     """
     Attributes:
         username (str):
@@ -37,12 +37,12 @@ class V2EnrollmentUnenrollCreateJsonBody:
         d = dict(src_dict)
         username = d.pop("username")
 
-        v2_enrollment_unenroll_create_json_body = cls(
+        api_enrollment_v2_enrollment_unenroll_create_json_body = cls(
             username=username,
         )
 
-        v2_enrollment_unenroll_create_json_body.additional_properties = d
-        return v2_enrollment_unenroll_create_json_body
+        api_enrollment_v2_enrollment_unenroll_create_json_body.additional_properties = d
+        return api_enrollment_v2_enrollment_unenroll_create_json_body
 
     @property
     def additional_keys(self) -> list[str]:
