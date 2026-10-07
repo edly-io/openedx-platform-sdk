@@ -72,8 +72,8 @@ with auth.get_studio_client() as client:
 
 # LMS Enrollment APIs
 with auth.get_lms_client() as client:
-    from openedx_platform_sdk.api.openedx_platform_sdk import v2_enrollment_list
-    result = v2_enrollment_list.sync(client=client)
+    from openedx_platform_sdk.api.openedx_platform_sdk import api_enrollment_v2_enrollment_list
+    result = api_enrollment_v2_enrollment_list.sync(client=client)
 ```
 
 Token is cached and auto-refreshed 60 seconds before expiry. The `JWT` prefix is used automatically (required by OpenedX).
@@ -88,7 +88,7 @@ Token is cached and auto-refreshed 60 seconds before expiry. The `JWT` prefix is
 from openedx_platform_sdk import AuthenticatedClient
 
 client = AuthenticatedClient(
-    base_url="http://localhost:18010/api/contentstore",
+    base_url="http://localhost:18010",
     token="your-jwt-token",
     prefix="JWT",
 )
@@ -186,9 +186,7 @@ with auth.get_studio_client() as client:
     print(home.courses)
 ```
 
-> **Note:** `lms_url` and `studio_url` are both plain service roots — no API prefix. Each helper appends its own: `get_studio_client()` targets `{studio_url}/api/contentstore` and `get_lms_client()` targets `{lms_url}/api/enrollment`.
->
-> Both accept an `api_prefix` argument to reach a different tagged namespace on the same service.
+> **Note:** `lms_url` and `studio_url` are both plain service roots — no API prefix. Every generated path carries its own (`/api/contentstore/v3/home/`, `/api/enrollment/v2/enrollment/`), so `get_studio_client()` and `get_lms_client()` use those roots as the base URL and one client reaches every namespace on its service.
 
 For typed usage examples covering all API groups (Home v3/v4, Course Details, Authoring Grading, XBlock lifecycle, Enrollment v2), see **[docs/testing-sdk-apis.rst](docs/testing-sdk-apis.rst)**.
 

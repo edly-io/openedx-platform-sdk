@@ -7,7 +7,7 @@ Usage:
 Where <sdk_root> is the directory that contains the ``openedx_platform_sdk``
 package (i.e. the directory where ``regen_sdk.sh`` lives).
 
-The script applies six targeted fixes in order:
+The script applies five targeted fixes in order:
 
 1. fix_unset_import    — adds the missing ``Unset`` name to ``from ...types``
                          imports in API files that use it in type annotations.
@@ -20,25 +20,19 @@ The script applies six targeted fixes in order:
                            model instances.
 4. fix_null_safe_datetime — replaces bare ``datetime.datetime.fromisoformat(
                             d.pop("field"))`` calls with a null-safe version so
-                            that courses with no dates set (API returns null)
-                            don't raise TypeError.
-5. fix_plain_list_enrollment_allowed — guards the ``from_dict()`` of
-                                       ``PaginatedCourseEnrollmentAllowedList``
-                                       against the endpoint returning a bare
-                                       JSON array instead of the expected
-                                       paginated envelope.
-6. fix_unenroll_body_union — drops the non-JSON body types from the unenroll
+                            that a date the API returns as null doesn't raise
+                            TypeError.
+5. fix_unenroll_body_union — drops the non-JSON body types from the unenroll
                              endpoint, which fix 2 leaves accepted but
                              unserialised (a silent empty POST to a
                              destructive endpoint).
 
-Fixes 4 and 5 work around platform schema bugs rather than generator bugs:
-the schema described responses the API never returns. Both are fixed upstream
-by https://github.com/openedx/openedx-platform/pull/39120, merged 2026-09-22.
-They stay until the committed schemas are regenerated from a platform revision
-that includes it — the generated code here still carries the bugs until then.
-Once it is regenerated both steps will patch nothing, which fails the run by
-design, and that is the signal to delete them.
+Fix 4 works around a platform schema bug rather than a generator bug: Studio's
+``CourseDetails`` declares its dates required and non-null, but the API returns
+null for a course with no dates set. The LMS half of the same bug, on
+``EnrollmentCourse``, was fixed upstream by
+https://github.com/openedx/openedx-platform/pull/39120, as was the bare-list
+``enrollment_allowed`` response a former fix patched.
 
 It then restores the hand-written ``auth`` exports to ``__init__.py``, which
 the generator rewrites without them.
@@ -53,6 +47,10 @@ import glob
 import os
 import re
 import sys
+
+# The unenroll endpoint's URL as the generator writes it into ``_get_kwargs``,
+# with or without the service's API prefix.
+UNENROLL_URL_PATTERN = re.compile(r'"url": "[^"]*/v2/enrollment/unenroll/"')
 
 # ---------------------------------------------------------------------------
 # Bug 1
@@ -197,15 +195,15 @@ def fix_dict_safe_to_dict(models_dir: str) -> int:
 def fix_null_safe_datetime(models_dir: str) -> int:
     """Replace bare ``datetime.fromisoformat(d.pop(...))`` with a null-safe form.
 
-    ``EnrollmentCourse`` datetime fields (``enrollment_start``,
-    ``enrollment_end``, ``course_start``, ``course_end``) are marked required
-    in the schema, but the API returns ``null`` for courses that have no dates
-    set.  The bare ``fromisoformat`` call raises ``TypeError`` on ``None``.
+    Studio's ``CourseDetails`` datetime fields are marked required and
+    non-null in the schema, but the API returns ``null`` for courses that have
+    no dates set.  The bare ``fromisoformat`` call raises ``TypeError`` on
+    ``None``.
 
-    Platform schema bug, not a generator bug. Fixed upstream by
-    https://github.com/openedx/openedx-platform/pull/39120, merged 2026-09-22 —
-    delete this step once the committed schemas are regenerated from a platform
-    revision that includes it.
+    Platform schema bug, not a generator bug. The LMS ``EnrollmentCourse``
+    fields had the same bug and were fixed upstream by
+    https://github.com/openedx/openedx-platform/pull/39120; delete this step
+    once ``CourseDetails`` is fixed the same way.
 
     Fix: split into a ``_raw_<var> = d.pop(...)`` step and a conditional
     ``fromisoformat`` that yields ``None`` when the raw value is not a string.
@@ -253,99 +251,71 @@ def fix_null_safe_datetime(models_dir: str) -> int:
 # Bug 5
 # ---------------------------------------------------------------------------
 
-def fix_plain_list_enrollment_allowed(models_dir: str) -> int:
-    """Normalise a bare-list response from the enrollment-allowed endpoint.
-
-    ``GET /v2/enrollment/enrollment_allowed/`` returns a plain JSON array
-    instead of the expected paginated envelope ``{"count": N, "results": [...]}``.
-    Fix: insert an ``isinstance(src_dict, list)`` guard at the top of
-    ``PaginatedCourseEnrollmentAllowedList.from_dict()`` that converts the bare
-    list into the envelope shape before the regular parsing runs.
-
-    Platform schema bug, not a generator bug. Fixed upstream by
-    https://github.com/openedx/openedx-platform/pull/39120, merged 2026-09-22 —
-    delete this step once the committed schemas are regenerated from a platform
-    revision that includes it.
-    """
-    TARGET = "paginated_course_enrollment_allowed_list.py"
-    MARKER = "        d = dict(src_dict)"
-    INSERT = (
-        "        if isinstance(src_dict, list):\n"
-        "            src_dict = {\"count\": len(src_dict), \"results\": src_dict}\n"
-    )
-
-    patched = 0
-    for path in _glob_py(models_dir):
-        if os.path.basename(path) != TARGET:
-            continue
-        text = open(path).read()
-        if INSERT in text:
-            patched += 1  # already patched; re-running is a no-op
-            break
-        if MARKER not in text:
-            break
-        text = text.replace(MARKER, INSERT + MARKER, 1)
-        open(path, "w").write(text)
-        patched += 1
-        print(f"  Fixed plain-list response in {TARGET}")
-        break
-    return patched
-
-
-# ---------------------------------------------------------------------------
-# Bug 6
-# ---------------------------------------------------------------------------
-
 def fix_unenroll_body_union(package_dir: str) -> int:
     """Drop the non-JSON body types from the unenroll endpoint.
 
     The platform schema declares three content types for ``POST
-    /v2/enrollment/unenroll/`` whose payloads are identical (``username: str``),
-    so the generator emits ``JsonBody``, ``DataBody`` and ``FilesBody`` and
-    accepts all three in the signature.
+    /api/enrollment/v2/enrollment/unenroll/`` whose payloads are identical
+    (``username: str``), so the generator emits ``JsonBody``, ``DataBody`` and
+    ``FilesBody`` and accepts all three in the signature.
 
     Bug 2 above keeps only the JSON branch in ``_get_kwargs``, which leaves the
     other two types accepted but unserialised: passing either sends a POST with
     no body and no ``Content-Type`` to a destructive endpoint, with no error.
     Since the generated signature is what callers type against, the types are
     removed rather than left as a silent trap.
+
+    The module is found by the URL it calls rather than by name, because the
+    name follows the schema's operationId, which changes whenever the platform
+    changes how it publishes the path.
     """
-    api_path = os.path.join(
-        package_dir, "api", "openedx_platform_sdk", "v2_enrollment_unenroll_create.py"
-    )
+    api_dir = os.path.join(package_dir, "api", "openedx_platform_sdk")
     models_init = os.path.join(package_dir, "models", "__init__.py")
-    stem = "v2_enrollment_unenroll_create"
-    dead = [f"V2EnrollmentUnenrollCreate{kind}Body" for kind in ("Data", "Files")]
+    matches = [
+        path for path in _glob_py(api_dir)
+        if UNENROLL_URL_PATTERN.search(open(path).read())
+    ]
+    if len(matches) != 1:
+        print(
+            f"  ERROR: expected one API module calling the unenroll URL, found {len(matches)}"
+            + (f": {', '.join(sorted(os.path.basename(m) for m in matches))}" if matches else "")
+            + ".",
+            file=sys.stderr,
+        )
+        return 0
+    api_path = matches[0]
+    stem = os.path.splitext(os.path.basename(api_path))[0]
+    camel = "".join(part.capitalize() for part in stem.split("_"))
+    dead = [f"{camel}{kind}Body" for kind in ("Data", "Files")]
 
     # Each of the three halves must independently end up clean. They are tracked
     # separately rather than through a shared counter: a shared one lets a half
     # that silently matched nothing be covered by a half that succeeded, which
     # ships a package whose ``__all__`` names modules that were deleted.
-    api_clean = False
     init_clean = False
 
-    if os.path.isfile(api_path):
-        text = open(api_path).read()
-        original = text
-        for name in dead:
-            snake = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
-            text = text.replace(f"from ...models.{snake} import {name}\n", "")
-            text = text.replace(f"    | {name}\n", "")
-            text = text.replace(f"        body ({name} | Unset):\n", "")
-        if text != original:
-            open(api_path, "w").write(text)
-            print(f"  Removed non-JSON unenroll body types from {os.path.basename(api_path)}")
-        # True whether this run removed them or an earlier run already did.
-        api_clean = not any(name in text for name in dead)
-        if not api_clean:
-            remaining = sorted(name for name in dead if name in text)
-            print(
-                f"  ERROR: {os.path.basename(api_path)} still references {', '.join(remaining)} "
-                "— the generator's output shape changed and the patterns above no longer match.",
-                file=sys.stderr,
-            )
-    else:
-        print(f"  ERROR: {api_path} is missing.", file=sys.stderr)
+    text = open(api_path).read()
+    original = text
+    for name in dead:
+        snake = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+        # Single-line, or wrapped in parentheses once the name is long enough.
+        text = re.sub(
+            rf"from \.\.\.models\.{snake} import (?:{name}|\(\s*{name},?\s*\))\n", "", text
+        )
+        text = text.replace(f"    | {name}\n", "")
+        text = text.replace(f"        body ({name} | Unset):\n", "")
+    if text != original:
+        open(api_path, "w").write(text)
+        print(f"  Removed non-JSON unenroll body types from {os.path.basename(api_path)}")
+    # True whether this run removed them or an earlier run already did.
+    api_clean = not any(_mentions(text, name) for name in dead)
+    if not api_clean:
+        remaining = sorted(name for name in dead if _mentions(text, name))
+        print(
+            f"  ERROR: {os.path.basename(api_path)} still references {', '.join(remaining)} "
+            "— the generator's output shape changed and the patterns above no longer match.",
+            file=sys.stderr,
+        )
 
     if os.path.isfile(models_init):
         text = open(models_init).read()
@@ -357,9 +327,9 @@ def fix_unenroll_body_union(package_dir: str) -> int:
         if text != original:
             open(models_init, "w").write(text)
             print("  Removed non-JSON unenroll body exports from models/__init__.py")
-        init_clean = not any(name in text for name in dead)
+        init_clean = not any(_mentions(text, name) for name in dead)
         if not init_clean:
-            remaining = sorted(name for name in dead if name in text)
+            remaining = sorted(name for name in dead if _mentions(text, name))
             print(
                 f"  ERROR: models/__init__.py still references {', '.join(remaining)} "
                 "— check the import and __all__ formatting the generator emits.",
@@ -443,6 +413,11 @@ def _glob_py(directory: str) -> list[str]:
     return glob.glob(os.path.join(directory, "*.py"))
 
 
+def _mentions(text: str, name: str) -> bool:
+    """Whether ``name`` appears as a whole identifier, not inside a longer one."""
+    return re.search(rf"\b{re.escape(name)}\b", text) is not None
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -462,7 +437,6 @@ def main() -> None:
         ("fix_multipart_bug", fix_multipart_bug(api_dir)),
         ("fix_dict_safe_to_dict", fix_dict_safe_to_dict(models_dir)),
         ("fix_null_safe_datetime", fix_null_safe_datetime(models_dir)),
-        ("fix_plain_list_enrollment_allowed", fix_plain_list_enrollment_allowed(models_dir)),
         ("fix_unenroll_body_union", fix_unenroll_body_union(package_dir)),
         ("restore_auth_exports", restore_auth_exports(package_dir)),
     ]

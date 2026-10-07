@@ -101,7 +101,8 @@ class OAuth2ClientCredentials:
         Return an AuthenticatedClient pre-configured with a valid JWT token.
 
         Args:
-            base_url: Base URL of the API (e.g. "http://localhost:18010/api/contentstore")
+            base_url: Root URL of the service (e.g. "http://localhost:18010"); the
+                generated paths carry their own API prefix
             raise_on_unexpected_status: Raise on undocumented status codes
             verify_ssl: Override SSL verification for the client
             **kwargs: Additional arguments forwarded to AuthenticatedClient
@@ -118,18 +119,16 @@ class OAuth2ClientCredentials:
             **kwargs,
         )
 
-    # Default API prefixes. The generated client's paths are relative to these
-    # (e.g. "/v2/enrollment/"), because the schemas are produced with the
-    # service prefix trimmed, so it has to come from the client's base URL.
-    STUDIO_API_PREFIX = "/api/contentstore"
-    LMS_API_PREFIX = "/api/enrollment"
-
-    def get_studio_client(self, api_prefix: str = STUDIO_API_PREFIX, **kwargs) -> AuthenticatedClient:
+    def get_studio_client(self, **kwargs) -> AuthenticatedClient:
         """
-        Return an AuthenticatedClient configured for a Studio API.
+        Return an AuthenticatedClient configured for Studio's APIs.
+
+        The generated paths are relative to the service root
+        (``/api/contentstore/v1/xblock/``, ``/api/authoring/v1/...``), so the
+        client's base URL is ``studio_url`` itself and one client reaches every
+        Studio namespace.
 
         Args:
-            api_prefix: API namespace to target, appended to ``studio_url``.
             **kwargs: Additional arguments forwarded to get_client().
 
         Raises:
@@ -139,15 +138,17 @@ class OAuth2ClientCredentials:
             raise ValueError(
                 "studio_url must be set on OAuth2ClientCredentials to use get_studio_client()"
             )
-        return self.get_client(base_url=self.studio_url + api_prefix, **kwargs)
+        return self.get_client(base_url=self.studio_url, **kwargs)
 
-    def get_lms_client(self, api_prefix: str = LMS_API_PREFIX, **kwargs) -> AuthenticatedClient:
+    def get_lms_client(self, **kwargs) -> AuthenticatedClient:
         """
-        Return an AuthenticatedClient configured for an LMS API.
+        Return an AuthenticatedClient configured for the LMS's APIs.
+
+        The generated paths are relative to the service root
+        (``/api/enrollment/v2/...``), so the client's base URL is ``lms_url``
+        itself and one client reaches every LMS namespace.
 
         Args:
-            api_prefix: API namespace to target, appended to ``lms_url``. Pass a
-                different value to reach another tagged LMS namespace.
             **kwargs: Additional arguments forwarded to get_client().
         """
-        return self.get_client(base_url=self.lms_url + api_prefix, **kwargs)
+        return self.get_client(base_url=self.lms_url, **kwargs)
