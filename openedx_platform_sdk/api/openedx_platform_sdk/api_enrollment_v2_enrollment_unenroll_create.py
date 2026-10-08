@@ -5,23 +5,25 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.v2_enrollment_unenroll_create_json_body import V2EnrollmentUnenrollCreateJsonBody
+from ...models.api_enrollment_v2_enrollment_unenroll_create_json_body import (
+    ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody,
+)
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
-    body: V2EnrollmentUnenrollCreateJsonBody
+    body: ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody
     | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/v2/enrollment/unenroll/",
+        "url": "/api/enrollment/v2/enrollment/unenroll/",
     }
 
-    if isinstance(body, V2EnrollmentUnenrollCreateJsonBody):
+    if isinstance(body, ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody):
         if not isinstance(body, Unset):
             _kwargs["json"] = body.to_dict()
 
@@ -61,7 +63,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
-    body: V2EnrollmentUnenrollCreateJsonBody
+    body: ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody
     | Unset = UNSET,
 ) -> Response[Any]:
     """Unenroll a user from all courses (retirement)
@@ -70,7 +72,7 @@ def sync_detailed(
     request must be made by a service user with CanRetireUser permission, not the user being unenrolled.
 
     Args:
-        body (V2EnrollmentUnenrollCreateJsonBody | Unset):
+        body (ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -94,7 +96,7 @@ def sync_detailed(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
-    body: V2EnrollmentUnenrollCreateJsonBody
+    body: ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody
     | Unset = UNSET,
 ) -> Response[Any]:
     """Unenroll a user from all courses (retirement)
@@ -103,7 +105,7 @@ async def asyncio_detailed(
     request must be made by a service user with CanRetireUser permission, not the user being unenrolled.
 
     Args:
-        body (V2EnrollmentUnenrollCreateJsonBody | Unset):
+        body (ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

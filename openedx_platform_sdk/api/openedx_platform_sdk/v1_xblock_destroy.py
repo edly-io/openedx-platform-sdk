@@ -15,7 +15,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": "/v1/xblock/{usage_key_string}/".format(
+        "url": "/api/contentstore/v1/xblock/{usage_key_string}/".format(
             usage_key_string=quote(str(usage_key_string), safe=""),
         ),
     }

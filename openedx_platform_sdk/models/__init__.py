@@ -1,5 +1,7 @@
 """Contains all the data models used in inputs/outputs"""
 
+from .api_enrollment_v2_enrollment_list_view import ApiEnrollmentV2EnrollmentListView
+from .api_enrollment_v2_enrollment_unenroll_create_json_body import ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody
 from .authoring_grading_course_grading_v0 import AuthoringGradingCourseGradingV0
 from .authoring_grading_course_grading_v0_grade_cutoffs import AuthoringGradingCourseGradingV0GradeCutoffs
 from .authoring_grading_grace_period_v0 import AuthoringGradingGracePeriodV0
@@ -17,7 +19,6 @@ from .instructor_info import InstructorInfo
 from .instructors import Instructors
 from .library_tab import LibraryTab
 from .library_view import LibraryView
-from .paginated_course_enrollment_allowed_list import PaginatedCourseEnrollmentAllowedList
 from .paginated_course_enrollment_list import PaginatedCourseEnrollmentList
 from .paginated_course_enrollments_api_list_list import PaginatedCourseEnrollmentsApiListList
 from .paginated_v4_home_courses_response import PaginatedV4HomeCoursesResponse
@@ -36,8 +37,6 @@ from .unsucceeded_course_serializer_v2 import UnsucceededCourseSerializerV2
 from .user_role import UserRole
 from .user_roles_response import UserRolesResponse
 from .v1_xblock_retrieve_view import V1XblockRetrieveView
-from .v2_enrollment_list_view import V2EnrollmentListView
-from .v2_enrollment_unenroll_create_json_body import V2EnrollmentUnenrollCreateJsonBody
 from .v3_course_details_retrieve_view import V3CourseDetailsRetrieveView
 from .xblock import Xblock
 from .xblock_actions_type_0 import XblockActionsType0
@@ -47,6 +46,8 @@ from .xblock_metadata_type_0 import XblockMetadataType0
 from .xblock_user_partition_info_type_0 import XblockUserPartitionInfoType0
 
 __all__ = (
+    "ApiEnrollmentV2EnrollmentListView",
+    "ApiEnrollmentV2EnrollmentUnenrollCreateJsonBody",
     "AuthoringGradingCourseGradingV0",
     "AuthoringGradingCourseGradingV0GradeCutoffs",
     "AuthoringGradingGracePeriodV0",
@@ -64,7 +65,6 @@ __all__ = (
     "Instructors",
     "LibraryTab",
     "LibraryView",
-    "PaginatedCourseEnrollmentAllowedList",
     "PaginatedCourseEnrollmentList",
     "PaginatedCourseEnrollmentsApiListList",
     "PaginatedV4HomeCoursesResponse",
@@ -83,8 +83,6 @@ __all__ = (
     "UserRole",
     "UserRolesResponse",
     "V1XblockRetrieveView",
-    "V2EnrollmentListView",
-    "V2EnrollmentUnenrollCreateJsonBody",
     "V3CourseDetailsRetrieveView",
     "Xblock",
     "XblockActionsType0",

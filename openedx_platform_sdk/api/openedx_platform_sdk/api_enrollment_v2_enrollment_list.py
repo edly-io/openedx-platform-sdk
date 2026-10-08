@@ -5,8 +5,8 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.api_enrollment_v2_enrollment_list_view import ApiEnrollmentV2EnrollmentListView
 from ...models.paginated_course_enrollment_list import PaginatedCourseEnrollmentList
-from ...models.v2_enrollment_list_view import V2EnrollmentListView
 from ...types import UNSET, Response, Unset
 
 
@@ -15,7 +15,7 @@ def _get_kwargs(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    view: ApiEnrollmentV2EnrollmentListView | Unset = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -36,7 +36,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/v2/enrollment/",
+        "url": "/api/enrollment/v2/enrollment/",
         "params": params,
     }
 
@@ -78,7 +78,7 @@ def sync_detailed(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    view: ApiEnrollmentV2EnrollmentListView | Unset = UNSET,
 ) -> Response[Any | PaginatedCourseEnrollmentList]:
     """List enrollments for a user (paginated)
 
@@ -91,7 +91,7 @@ def sync_detailed(
         page (str | Unset):
         page_size (str | Unset):
         user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        view (ApiEnrollmentV2EnrollmentListView | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -121,7 +121,7 @@ def sync(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    view: ApiEnrollmentV2EnrollmentListView | Unset = UNSET,
 ) -> Any | PaginatedCourseEnrollmentList | None:
     """List enrollments for a user (paginated)
 
@@ -134,7 +134,7 @@ def sync(
         page (str | Unset):
         page_size (str | Unset):
         user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        view (ApiEnrollmentV2EnrollmentListView | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -159,7 +159,7 @@ async def asyncio_detailed(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    view: ApiEnrollmentV2EnrollmentListView | Unset = UNSET,
 ) -> Response[Any | PaginatedCourseEnrollmentList]:
     """List enrollments for a user (paginated)
 
@@ -172,7 +172,7 @@ async def asyncio_detailed(
         page (str | Unset):
         page_size (str | Unset):
         user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        view (ApiEnrollmentV2EnrollmentListView | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -200,7 +200,7 @@ async def asyncio(
     page: str | Unset = UNSET,
     page_size: str | Unset = UNSET,
     user: str | Unset = UNSET,
-    view: V2EnrollmentListView | Unset = UNSET,
+    view: ApiEnrollmentV2EnrollmentListView | Unset = UNSET,
 ) -> Any | PaginatedCourseEnrollmentList | None:
     """List enrollments for a user (paginated)
 
@@ -213,7 +213,7 @@ async def asyncio(
         page (str | Unset):
         page_size (str | Unset):
         user (str | Unset):
-        view (V2EnrollmentListView | Unset):
+        view (ApiEnrollmentV2EnrollmentListView | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

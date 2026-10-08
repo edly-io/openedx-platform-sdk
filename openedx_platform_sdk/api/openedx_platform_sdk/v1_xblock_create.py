@@ -17,7 +17,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/v1/xblock/",
+        "url": "/api/contentstore/v1/xblock/",
     }
 
     if isinstance(body, Xblock):

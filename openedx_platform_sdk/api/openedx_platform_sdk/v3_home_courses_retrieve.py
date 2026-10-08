@@ -1,29 +1,43 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.course_home_tab import CourseHomeTab
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    *,
+    org: str | Unset = UNSET,
+) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    params["org"] = org
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/v3/home/courses/",
+        "url": "/api/contentstore/v3/home/courses/",
+        "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> CourseHomeTab | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | CourseHomeTab | None:
     if response.status_code == 200:
         response_200 = CourseHomeTab.from_dict(response.json())
 
         return response_200
+
+    if response.status_code == 401:
+        response_401 = cast(Any, None)
+        return response_401
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -31,7 +45,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[CourseHomeTab]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | CourseHomeTab]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -43,22 +57,28 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
-) -> Response[CourseHomeTab]:
+    org: str | Unset = UNSET,
+) -> Response[Any | CourseHomeTab]:
     """Get an object containing all courses.
 
     **Example Request**
 
         GET /api/contentstore/v3/home/courses/
 
+    Args:
+        org (str | Unset):
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[CourseHomeTab]
+        Response[Any | CourseHomeTab]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        org=org,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -70,45 +90,56 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient | Client,
-) -> CourseHomeTab | None:
+    org: str | Unset = UNSET,
+) -> Any | CourseHomeTab | None:
     """Get an object containing all courses.
 
     **Example Request**
 
         GET /api/contentstore/v3/home/courses/
 
+    Args:
+        org (str | Unset):
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CourseHomeTab
+        Any | CourseHomeTab
     """
 
     return sync_detailed(
         client=client,
+        org=org,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
-) -> Response[CourseHomeTab]:
+    org: str | Unset = UNSET,
+) -> Response[Any | CourseHomeTab]:
     """Get an object containing all courses.
 
     **Example Request**
 
         GET /api/contentstore/v3/home/courses/
 
+    Args:
+        org (str | Unset):
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[CourseHomeTab]
+        Response[Any | CourseHomeTab]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        org=org,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -118,23 +149,28 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
-) -> CourseHomeTab | None:
+    org: str | Unset = UNSET,
+) -> Any | CourseHomeTab | None:
     """Get an object containing all courses.
 
     **Example Request**
 
         GET /api/contentstore/v3/home/courses/
 
+    Args:
+        org (str | Unset):
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CourseHomeTab
+        Any | CourseHomeTab
     """
 
     return (
         await asyncio_detailed(
             client=client,
+            org=org,
         )
     ).parsed

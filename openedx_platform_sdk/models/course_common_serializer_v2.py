@@ -19,7 +19,9 @@ class CourseCommonSerializerV2:
         lms_link (str):
         cms_link (str):
         number (str):
+        display_number (str):
         org (str):
+        display_org (str):
         rerun_link (str):
         run (str):
         url (str):
@@ -31,7 +33,9 @@ class CourseCommonSerializerV2:
     lms_link: str
     cms_link: str
     number: str
+    display_number: str
     org: str
+    display_org: str
     rerun_link: str
     run: str
     url: str
@@ -49,7 +53,11 @@ class CourseCommonSerializerV2:
 
         number = self.number
 
+        display_number = self.display_number
+
         org = self.org
+
+        display_org = self.display_org
 
         rerun_link = self.rerun_link
 
@@ -68,7 +76,9 @@ class CourseCommonSerializerV2:
                 "lms_link": lms_link,
                 "cms_link": cms_link,
                 "number": number,
+                "display_number": display_number,
                 "org": org,
+                "display_org": display_org,
                 "rerun_link": rerun_link,
                 "run": run,
                 "url": url,
@@ -91,7 +101,11 @@ class CourseCommonSerializerV2:
 
         number = d.pop("number")
 
+        display_number = d.pop("display_number")
+
         org = d.pop("org")
+
+        display_org = d.pop("display_org")
 
         rerun_link = d.pop("rerun_link")
 
@@ -107,7 +121,9 @@ class CourseCommonSerializerV2:
             lms_link=lms_link,
             cms_link=cms_link,
             number=number,
+            display_number=display_number,
             org=org,
+            display_org=display_org,
             rerun_link=rerun_link,
             run=run,
             url=url,

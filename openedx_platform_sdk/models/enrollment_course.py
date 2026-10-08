@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,10 +17,10 @@ class EnrollmentCourse:
     Attributes:
         course_id (str):
         course_name (str):
-        enrollment_start (datetime.datetime):
-        enrollment_end (datetime.datetime):
-        course_start (datetime.datetime):
-        course_end (datetime.datetime):
+        enrollment_start (datetime.datetime | None):
+        enrollment_end (datetime.datetime | None):
+        course_start (datetime.datetime | None):
+        course_end (datetime.datetime | None):
         invite_only (bool):
         course_modes (str):
         pacing_type (str):
@@ -28,10 +28,10 @@ class EnrollmentCourse:
 
     course_id: str
     course_name: str
-    enrollment_start: datetime.datetime
-    enrollment_end: datetime.datetime
-    course_start: datetime.datetime
-    course_end: datetime.datetime
+    enrollment_start: datetime.datetime | None
+    enrollment_end: datetime.datetime | None
+    course_start: datetime.datetime | None
+    course_end: datetime.datetime | None
     invite_only: bool
     course_modes: str
     pacing_type: str
@@ -42,13 +42,29 @@ class EnrollmentCourse:
 
         course_name = self.course_name
 
-        enrollment_start = self.enrollment_start.isoformat()
+        enrollment_start: None | str
+        if isinstance(self.enrollment_start, datetime.datetime):
+            enrollment_start = self.enrollment_start.isoformat()
+        else:
+            enrollment_start = self.enrollment_start
 
-        enrollment_end = self.enrollment_end.isoformat()
+        enrollment_end: None | str
+        if isinstance(self.enrollment_end, datetime.datetime):
+            enrollment_end = self.enrollment_end.isoformat()
+        else:
+            enrollment_end = self.enrollment_end
 
-        course_start = self.course_start.isoformat()
+        course_start: None | str
+        if isinstance(self.course_start, datetime.datetime):
+            course_start = self.course_start.isoformat()
+        else:
+            course_start = self.course_start
 
-        course_end = self.course_end.isoformat()
+        course_end: None | str
+        if isinstance(self.course_end, datetime.datetime):
+            course_end = self.course_end.isoformat()
+        else:
+            course_end = self.course_end
 
         invite_only = self.invite_only
 
@@ -81,17 +97,65 @@ class EnrollmentCourse:
 
         course_name = d.pop("course_name")
 
-        _raw_enrollment_start = d.pop("enrollment_start")
-        enrollment_start = datetime.datetime.fromisoformat(_raw_enrollment_start) if isinstance(_raw_enrollment_start, str) else None
+        def _parse_enrollment_start(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                enrollment_start_type_0 = datetime.datetime.fromisoformat(data)
 
-        _raw_enrollment_end = d.pop("enrollment_end")
-        enrollment_end = datetime.datetime.fromisoformat(_raw_enrollment_end) if isinstance(_raw_enrollment_end, str) else None
+                return enrollment_start_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
 
-        _raw_course_start = d.pop("course_start")
-        course_start = datetime.datetime.fromisoformat(_raw_course_start) if isinstance(_raw_course_start, str) else None
+        enrollment_start = _parse_enrollment_start(d.pop("enrollment_start"))
 
-        _raw_course_end = d.pop("course_end")
-        course_end = datetime.datetime.fromisoformat(_raw_course_end) if isinstance(_raw_course_end, str) else None
+        def _parse_enrollment_end(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                enrollment_end_type_0 = datetime.datetime.fromisoformat(data)
+
+                return enrollment_end_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
+
+        enrollment_end = _parse_enrollment_end(d.pop("enrollment_end"))
+
+        def _parse_course_start(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                course_start_type_0 = datetime.datetime.fromisoformat(data)
+
+                return course_start_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
+
+        course_start = _parse_course_start(d.pop("course_start"))
+
+        def _parse_course_end(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                course_end_type_0 = datetime.datetime.fromisoformat(data)
+
+                return course_end_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
+
+        course_end = _parse_course_end(d.pop("course_end"))
 
         invite_only = d.pop("invite_only")
 
