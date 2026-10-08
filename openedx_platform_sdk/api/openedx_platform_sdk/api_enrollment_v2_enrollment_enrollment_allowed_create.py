@@ -6,7 +6,6 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.course_enrollment_allowed import CourseEnrollmentAllowed
-from ...models.paginated_course_enrollment_allowed_list import PaginatedCourseEnrollmentAllowedList
 from ...types import UNSET, Response, Unset
 
 
@@ -25,7 +24,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/v2/enrollment/enrollment_allowed/",
+        "url": "/api/enrollment/v2/enrollment/enrollment_allowed/",
         "params": params,
     }
 
@@ -39,9 +38,14 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList | None:
+) -> Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed] | None:
     if response.status_code == 200:
-        response_200 = PaginatedCourseEnrollmentAllowedList.from_dict(response.json())
+        response_200 = []
+        _response_200 = response.json()
+        for response_200_item_data in _response_200:
+            response_200_item = CourseEnrollmentAllowed.from_dict(response_200_item_data)
+
+            response_200.append(response_200_item)
 
         return response_200
 
@@ -78,7 +82,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList]:
+) -> Response[Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -92,7 +96,7 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: CourseEnrollmentAllowed | CourseEnrollmentAllowed | CourseEnrollmentAllowed | Unset = UNSET,
     email: str | Unset = UNSET,
-) -> Response[Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList]:
+) -> Response[Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]]:
     """Manage CourseEnrollmentAllowed records (admin-only)
 
      GET lists allowed enrollments for an email; POST creates a new one; DELETE removes an existing one
@@ -118,7 +122,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList]
+        Response[Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]]
     """
 
     kwargs = _get_kwargs(
@@ -138,7 +142,7 @@ def sync(
     client: AuthenticatedClient | Client,
     body: CourseEnrollmentAllowed | CourseEnrollmentAllowed | CourseEnrollmentAllowed | Unset = UNSET,
     email: str | Unset = UNSET,
-) -> Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList | None:
+) -> Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed] | None:
     """Manage CourseEnrollmentAllowed records (admin-only)
 
      GET lists allowed enrollments for an email; POST creates a new one; DELETE removes an existing one
@@ -164,7 +168,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList
+        Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]
     """
 
     return sync_detailed(
@@ -179,7 +183,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: CourseEnrollmentAllowed | CourseEnrollmentAllowed | CourseEnrollmentAllowed | Unset = UNSET,
     email: str | Unset = UNSET,
-) -> Response[Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList]:
+) -> Response[Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]]:
     """Manage CourseEnrollmentAllowed records (admin-only)
 
      GET lists allowed enrollments for an email; POST creates a new one; DELETE removes an existing one
@@ -205,7 +209,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList]
+        Response[Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]]
     """
 
     kwargs = _get_kwargs(
@@ -223,7 +227,7 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: CourseEnrollmentAllowed | CourseEnrollmentAllowed | CourseEnrollmentAllowed | Unset = UNSET,
     email: str | Unset = UNSET,
-) -> Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList | None:
+) -> Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed] | None:
     """Manage CourseEnrollmentAllowed records (admin-only)
 
      GET lists allowed enrollments for an email; POST creates a new one; DELETE removes an existing one
@@ -249,7 +253,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | CourseEnrollmentAllowed | PaginatedCourseEnrollmentAllowedList
+        Any | CourseEnrollmentAllowed | list[CourseEnrollmentAllowed]
     """
 
     return (

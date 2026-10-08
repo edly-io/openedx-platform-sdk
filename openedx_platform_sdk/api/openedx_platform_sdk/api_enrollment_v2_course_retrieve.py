@@ -24,7 +24,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/v2/course/{course_id}".format(
+        "url": "/api/enrollment/v2/course/{course_id}".format(
             course_id=quote(str(course_id), safe=""),
         ),
         "params": params,
