@@ -36,7 +36,7 @@ export class OAuth2ClientCredentials {
     this.lmsUrl = options.lmsUrl.replace(/\/+$/, '');
     this.clientId = options.clientId;
     this.clientSecret = options.clientSecret;
-    this.studioUrl = options.studioUrl ?? '';
+    this.studioUrl = (options.studioUrl ?? '').replace(/\/+$/, '');
     this.refreshBufferSeconds = options.refreshBufferSeconds ?? 60;
   }
 
@@ -82,6 +82,11 @@ export class OAuth2ClientCredentials {
     });
   }
 
+  /**
+   * Returns a client for Studio's APIs. Generated paths are relative to the
+   * service root (`/api/contentstore/...`, `/api/authoring/...`), so the base
+   * URL is `studioUrl` itself and one client reaches every Studio namespace.
+   */
   async getStudioClient(headers?: Record<string, string>): Promise<Client> {
     if (!this.studioUrl) {
       throw new Error('studioUrl must be set on OAuth2ClientCredentials to use getStudioClient()');
@@ -89,7 +94,12 @@ export class OAuth2ClientCredentials {
     return this.getClient(this.studioUrl, headers);
   }
 
+  /**
+   * Returns a client for the LMS's APIs. Generated paths are relative to the
+   * service root (`/api/enrollment/v2/...`), so the base URL is `lmsUrl`
+   * itself and one client reaches every LMS namespace.
+   */
   async getLmsClient(headers?: Record<string, string>): Promise<Client> {
-    return this.getClient(`${this.lmsUrl}/api/enrollment`, headers);
+    return this.getClient(this.lmsUrl, headers);
   }
 }

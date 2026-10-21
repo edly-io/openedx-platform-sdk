@@ -16,20 +16,24 @@ npm install @openedx/openedx-platform-sdk
 ## Usage
 
 ```ts
-import { OAuth2ClientCredentials, v4HomeCoursesRetrieve } from '@openedx/openedx-platform-sdk';
+import { OAuth2ClientCredentials, v4CoursesRetrieve } from '@openedx/openedx-platform-sdk';
 
 const auth = new OAuth2ClientCredentials({
   lmsUrl: 'http://local.openedx.io:8000',
-  studioUrl: 'http://studio.local.openedx.io:8001/api/contentstore',
+  studioUrl: 'http://studio.local.openedx.io:8001',
   clientId: 'your-client-id',
   clientSecret: 'your-client-secret',
 });
 
 const client = await auth.getStudioClient();
-const { data } = await v4HomeCoursesRetrieve({ client });
+const { data } = await v4CoursesRetrieve({ client });
 
 const lmsClient = await auth.getLmsClient();
 ```
+
+`lmsUrl` and `studioUrl` are plain service roots, with no API prefix. Every
+generated path carries its own (`/api/authoring/...`, `/api/enrollment/v2/...`),
+so one client reaches every namespace on its service.
 
 Tokens are fetched with the OAuth2 `client_credentials` grant, sent with the
 `JWT` prefix that OpenedX expects, and refreshed automatically before expiry.
@@ -41,9 +45,11 @@ and build a client around the existing axios instance:
 
 ```ts
 import { createClient } from '@openedx/openedx-platform-sdk';
+import { getConfig } from '@edx/frontend-platform';
 import { getAuthenticatedHttpClient } from '@edx/frontend-platform/auth';
 
-const client = createClient({ axios: getAuthenticatedHttpClient(), baseURL: studioUrl });
+// The Studio service root, e.g. http://studio.local.openedx.io:8001.
+const client = createClient({ axios: getAuthenticatedHttpClient(), baseURL: getConfig().STUDIO_BASE_URL });
 ```
 
 ## Regenerating

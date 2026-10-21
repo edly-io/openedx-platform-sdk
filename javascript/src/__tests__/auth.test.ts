@@ -4,7 +4,7 @@ const OPTS = {
   lmsUrl: 'https://lms.example.com/',
   clientId: 'id',
   clientSecret: 'secret',
-  studioUrl: 'https://studio.example.com/api/contentstore',
+  studioUrl: 'https://studio.example.com/',
 };
 
 function mockTokenResponse(token = 'tok-1', expiresIn = 3600) {
@@ -86,12 +86,21 @@ describe('OAuth2ClientCredentials', () => {
     await expect(auth.getStudioClient()).rejects.toThrow('studioUrl must be set');
   });
 
-  it('points the lms client at the enrollment api', async () => {
+  it('points the lms client at the lms service root', async () => {
     global.fetch = jest.fn().mockResolvedValue(mockTokenResponse()) as unknown as typeof fetch;
 
     const auth = new OAuth2ClientCredentials(OPTS);
     const client = await auth.getLmsClient();
 
-    expect(client.getConfig().baseURL).toBe('https://lms.example.com/api/enrollment');
+    expect(client.getConfig().baseURL).toBe('https://lms.example.com');
+  });
+
+  it('points the studio client at the studio service root', async () => {
+    global.fetch = jest.fn().mockResolvedValue(mockTokenResponse()) as unknown as typeof fetch;
+
+    const auth = new OAuth2ClientCredentials(OPTS);
+    const client = await auth.getStudioClient();
+
+    expect(client.getConfig().baseURL).toBe('https://studio.example.com');
   });
 });
