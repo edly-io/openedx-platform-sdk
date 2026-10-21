@@ -12,6 +12,9 @@ import type {
   ApiEnrollmentV2CourseRetrieveData,
   ApiEnrollmentV2CourseRetrieveErrors,
   ApiEnrollmentV2CourseRetrieveResponses,
+  ApiEnrollmentV2CoursesRetrieveData,
+  ApiEnrollmentV2CoursesRetrieveErrors,
+  ApiEnrollmentV2CoursesRetrieveResponses,
   ApiEnrollmentV2EnrollmentCreateData,
   ApiEnrollmentV2EnrollmentCreateErrors,
   ApiEnrollmentV2EnrollmentCreateResponses,
@@ -35,13 +38,25 @@ import type {
   ApiEnrollmentV2EnrollmentRetrieveResponses,
   ApiEnrollmentV2EnrollmentsListData,
   ApiEnrollmentV2EnrollmentsListErrors,
+  ApiEnrollmentV2EnrollmentsListLegacyData,
+  ApiEnrollmentV2EnrollmentsListLegacyErrors,
+  ApiEnrollmentV2EnrollmentsListLegacyResponses,
   ApiEnrollmentV2EnrollmentsListResponses,
+  ApiEnrollmentV2EnrollmentsRetrieveData,
+  ApiEnrollmentV2EnrollmentsRetrieveErrors,
+  ApiEnrollmentV2EnrollmentsRetrieveResponses,
   ApiEnrollmentV2EnrollmentUnenrollCreateData,
   ApiEnrollmentV2EnrollmentUnenrollCreateErrors,
   ApiEnrollmentV2EnrollmentUnenrollCreateResponses,
   ApiEnrollmentV2RolesRetrieveData,
   ApiEnrollmentV2RolesRetrieveErrors,
   ApiEnrollmentV2RolesRetrieveResponses,
+  V1CoursesYoutubeTranscriptChecksListData,
+  V1CoursesYoutubeTranscriptChecksListErrors,
+  V1CoursesYoutubeTranscriptChecksListResponses,
+  V1CoursesYoutubeTranscriptImportsCreateData,
+  V1CoursesYoutubeTranscriptImportsCreateErrors,
+  V1CoursesYoutubeTranscriptImportsCreateResponses,
   V1XblockCreateData,
   V1XblockCreateErrors,
   V1XblockCreateResponses,
@@ -54,9 +69,30 @@ import type {
   V1XblockRetrieveData,
   V1XblockRetrieveErrors,
   V1XblockRetrieveResponses,
+  V1XblocksCreateData,
+  V1XblocksCreateErrors,
+  V1XblocksCreateResponses,
+  V1XblocksDestroyData,
+  V1XblocksDestroyErrors,
+  V1XblocksDestroyResponses,
+  V1XblocksPartialUpdateData,
+  V1XblocksPartialUpdateErrors,
+  V1XblocksPartialUpdateResponses,
+  V1XblocksRetrieveData,
+  V1XblocksRetrieveErrors,
+  V1XblocksRetrieveResponses,
+  V1XblocksUpdateData,
+  V1XblocksUpdateErrors,
+  V1XblocksUpdateResponses,
   V1XblockUpdateData,
   V1XblockUpdateErrors,
   V1XblockUpdateResponses,
+  V2CoursesTextbooksListData,
+  V2CoursesTextbooksListErrors,
+  V2CoursesTextbooksListResponses,
+  V2CoursesVideoSettingsRetrieveData,
+  V2CoursesVideoSettingsRetrieveErrors,
+  V2CoursesVideoSettingsRetrieveResponses,
   V3AuthoringGradingPartialUpdateData,
   V3AuthoringGradingPartialUpdateErrors,
   V3AuthoringGradingPartialUpdateResponses,
@@ -66,14 +102,34 @@ import type {
   V3CourseDetailsUpdateData,
   V3CourseDetailsUpdateErrors,
   V3CourseDetailsUpdateResponses,
+  V3CoursesDetailsRetrieveData,
+  V3CoursesDetailsRetrieveErrors,
+  V3CoursesDetailsRetrieveResponses,
+  V3CoursesDetailsUpdateData,
+  V3CoursesDetailsUpdateErrors,
+  V3CoursesDetailsUpdateResponses,
+  V3CoursesGradingPartialUpdateData,
+  V3CoursesGradingPartialUpdateErrors,
+  V3CoursesGradingPartialUpdateResponses,
   V3HomeCoursesRetrieveData,
   V3HomeCoursesRetrieveErrors,
+  V3HomeCoursesRetrieveLegacyData,
+  V3HomeCoursesRetrieveLegacyErrors,
+  V3HomeCoursesRetrieveLegacyResponses,
   V3HomeCoursesRetrieveResponses,
   V3HomeLibrariesRetrieveData,
   V3HomeLibrariesRetrieveErrors,
+  V3HomeLibrariesRetrieveLegacyData,
+  V3HomeLibrariesRetrieveLegacyErrors,
+  V3HomeLibrariesRetrieveLegacyResponses,
   V3HomeLibrariesRetrieveResponses,
   V3HomeRetrieveData,
+  V3HomeRetrieveLegacyData,
+  V3HomeRetrieveLegacyResponses,
   V3HomeRetrieveResponses,
+  V4CoursesRetrieveData,
+  V4CoursesRetrieveErrors,
+  V4CoursesRetrieveResponses,
   V4HomeCoursesRetrieveData,
   V4HomeCoursesRetrieveErrors,
   V4HomeCoursesRetrieveResponses,
@@ -98,20 +154,76 @@ export type Options<
 };
 
 /**
+ * Report the transcript availability of a video
+ *
+ * Reports which transcripts exist for the video named by the `data` parameter, and whether the transcript published on YouTube differs from the stored one.
+ */
+export const v1CoursesYoutubeTranscriptChecksList = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<V1CoursesYoutubeTranscriptChecksListData, ThrowOnError>,
+): RequestResult<
+  V1CoursesYoutubeTranscriptChecksListResponses,
+  V1CoursesYoutubeTranscriptChecksListErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    V1CoursesYoutubeTranscriptChecksListResponses,
+    V1CoursesYoutubeTranscriptChecksListErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v1/courses/{course_key}/youtube_transcript_checks/",
+    ...options,
+  });
+
+/**
+ * Import a video's transcript from YouTube
+ *
+ * Downloads the transcript YouTube publishes for the video named in the request body and stores it against that video, replacing any transcript already stored.
+ */
+export const v1CoursesYoutubeTranscriptImportsCreate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<V1CoursesYoutubeTranscriptImportsCreateData, ThrowOnError>,
+): RequestResult<
+  V1CoursesYoutubeTranscriptImportsCreateResponses,
+  V1CoursesYoutubeTranscriptImportsCreateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    V1CoursesYoutubeTranscriptImportsCreateResponses,
+    V1CoursesYoutubeTranscriptImportsCreateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v1/courses/{course_key}/youtube_transcript_imports/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * Create an xblock
  *
  * Create a new xblock under a parent block. The ``parent_locator`` field on the request body identifies the parent and (implicitly) the course.
  */
-export const v1XblockCreate = <ThrowOnError extends boolean = false>(
-  options?: Options<V1XblockCreateData, ThrowOnError>,
-): RequestResult<V1XblockCreateResponses, V1XblockCreateErrors, ThrowOnError> =>
+export const v1XblocksCreate = <ThrowOnError extends boolean = false>(
+  options?: Options<V1XblocksCreateData, ThrowOnError>,
+): RequestResult<
+  V1XblocksCreateResponses,
+  V1XblocksCreateErrors,
+  ThrowOnError
+> =>
   (options?.client ?? client).post<
-    V1XblockCreateResponses,
-    V1XblockCreateErrors,
+    V1XblocksCreateResponses,
+    V1XblocksCreateErrors,
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v1/xblock/",
+    url: "/api/authoring/v1/xblocks/",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -124,38 +236,38 @@ export const v1XblockCreate = <ThrowOnError extends boolean = false>(
  *
  * Delete an xblock identified by its usage key.
  */
-export const v1XblockDestroy = <ThrowOnError extends boolean = false>(
-  options: Options<V1XblockDestroyData, ThrowOnError>,
+export const v1XblocksDestroy = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblocksDestroyData, ThrowOnError>,
 ): RequestResult<
-  V1XblockDestroyResponses,
-  V1XblockDestroyErrors,
+  V1XblocksDestroyResponses,
+  V1XblocksDestroyErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    V1XblockDestroyResponses,
-    V1XblockDestroyErrors,
+    V1XblocksDestroyResponses,
+    V1XblocksDestroyErrors,
     ThrowOnError
-  >({ url: "/v1/xblock/{usage_key_string}/", ...options });
+  >({ url: "/api/authoring/v1/xblocks/{usage_key_string}/", ...options });
 
 /**
  * Retrieve an xblock
  *
  * Retrieve an xblock (and, by default, its nested tree) by usage key. Supports ADR 0036 ``?view=minimal`` to strip contextual fields, plus the legacy ``?fields=`` type-of-response selector.
  */
-export const v1XblockRetrieve = <ThrowOnError extends boolean = false>(
-  options: Options<V1XblockRetrieveData, ThrowOnError>,
+export const v1XblocksRetrieve = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblocksRetrieveData, ThrowOnError>,
 ): RequestResult<
-  V1XblockRetrieveResponses,
-  V1XblockRetrieveErrors,
+  V1XblocksRetrieveResponses,
+  V1XblocksRetrieveErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    V1XblockRetrieveResponses,
-    V1XblockRetrieveErrors,
+    V1XblocksRetrieveResponses,
+    V1XblocksRetrieveErrors,
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v1/xblock/{usage_key_string}/",
+    url: "/api/authoring/v1/xblocks/{usage_key_string}/",
     ...options,
   });
 
@@ -164,20 +276,20 @@ export const v1XblockRetrieve = <ThrowOnError extends boolean = false>(
  *
  * Partially update an xblock identified by its usage key. Only the fields present in the request body are updated.
  */
-export const v1XblockPartialUpdate = <ThrowOnError extends boolean = false>(
-  options: Options<V1XblockPartialUpdateData, ThrowOnError>,
+export const v1XblocksPartialUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblocksPartialUpdateData, ThrowOnError>,
 ): RequestResult<
-  V1XblockPartialUpdateResponses,
-  V1XblockPartialUpdateErrors,
+  V1XblocksPartialUpdateResponses,
+  V1XblocksPartialUpdateErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    V1XblockPartialUpdateResponses,
-    V1XblockPartialUpdateErrors,
+    V1XblocksPartialUpdateResponses,
+    V1XblocksPartialUpdateErrors,
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v1/xblock/{usage_key_string}/",
+    url: "/api/authoring/v1/xblocks/{usage_key_string}/",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -190,16 +302,114 @@ export const v1XblockPartialUpdate = <ThrowOnError extends boolean = false>(
  *
  * Fully update an xblock identified by its usage key.
  */
-export const v1XblockUpdate = <ThrowOnError extends boolean = false>(
-  options: Options<V1XblockUpdateData, ThrowOnError>,
-): RequestResult<V1XblockUpdateResponses, V1XblockUpdateErrors, ThrowOnError> =>
+export const v1XblocksUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblocksUpdateData, ThrowOnError>,
+): RequestResult<
+  V1XblocksUpdateResponses,
+  V1XblocksUpdateErrors,
+  ThrowOnError
+> =>
   (options.client ?? client).put<
-    V1XblockUpdateResponses,
-    V1XblockUpdateErrors,
+    V1XblocksUpdateResponses,
+    V1XblocksUpdateErrors,
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v1/xblock/{usage_key_string}/",
+    url: "/api/authoring/v1/xblocks/{usage_key_string}/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List a course's PDF textbooks
+ *
+ * Returns one page of the course's PDF textbooks, each with its chapters, in the order the course stores them, which is also the order of the course's textbook tabs.
+ */
+export const v2CoursesTextbooksList = <ThrowOnError extends boolean = false>(
+  options: Options<V2CoursesTextbooksListData, ThrowOnError>,
+): RequestResult<
+  V2CoursesTextbooksListResponses,
+  V2CoursesTextbooksListErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    V2CoursesTextbooksListResponses,
+    V2CoursesTextbooksListErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v2/courses/{course_key}/textbooks/",
+    ...options,
+  });
+
+/**
+ * Retrieve a course's video settings
+ *
+ * Returns the course's video upload limits, thumbnail image limits, transcript settings and the Studio addresses that act on them. The course's uploaded videos are listed by `GET /api/authoring/v1/courses/{course_key}/videos/`.
+ */
+export const v2CoursesVideoSettingsRetrieve = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<V2CoursesVideoSettingsRetrieveData, ThrowOnError>,
+): RequestResult<
+  V2CoursesVideoSettingsRetrieveResponses,
+  V2CoursesVideoSettingsRetrieveErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    V2CoursesVideoSettingsRetrieveResponses,
+    V2CoursesVideoSettingsRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v2/courses/{course_key}/video_settings/",
+    ...options,
+  });
+
+/**
+ * Retrieve a course's details
+ *
+ * Get an object containing the course details for the specified course. Supports the ADR 0036 ``?view=minimal`` preset and ``?fields=`` explicit field selection (see the parameter descriptions for details).
+ */
+export const v3CoursesDetailsRetrieve = <ThrowOnError extends boolean = false>(
+  options: Options<V3CoursesDetailsRetrieveData, ThrowOnError>,
+): RequestResult<
+  V3CoursesDetailsRetrieveResponses,
+  V3CoursesDetailsRetrieveErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    V3CoursesDetailsRetrieveResponses,
+    V3CoursesDetailsRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v3/courses/{course_id}/details/",
+    ...options,
+  });
+
+/**
+ * Update a course's details
+ *
+ * Update the details for the specified course.
+ */
+export const v3CoursesDetailsUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<V3CoursesDetailsUpdateData, ThrowOnError>,
+): RequestResult<
+  V3CoursesDetailsUpdateResponses,
+  V3CoursesDetailsUpdateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    V3CoursesDetailsUpdateResponses,
+    V3CoursesDetailsUpdateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v3/courses/{course_id}/details/",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -212,70 +422,22 @@ export const v1XblockUpdate = <ThrowOnError extends boolean = false>(
  *
  * Partially update the grading settings for the specified course.
  */
-export const v3AuthoringGradingPartialUpdate = <
+export const v3CoursesGradingPartialUpdate = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<V3AuthoringGradingPartialUpdateData, ThrowOnError>,
+  options: Options<V3CoursesGradingPartialUpdateData, ThrowOnError>,
 ): RequestResult<
-  V3AuthoringGradingPartialUpdateResponses,
-  V3AuthoringGradingPartialUpdateErrors,
+  V3CoursesGradingPartialUpdateResponses,
+  V3CoursesGradingPartialUpdateErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    V3AuthoringGradingPartialUpdateResponses,
-    V3AuthoringGradingPartialUpdateErrors,
+    V3CoursesGradingPartialUpdateResponses,
+    V3CoursesGradingPartialUpdateErrors,
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v3/authoring_grading/{course_key}/",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Retrieve a course's details
- *
- * Get an object containing the course details for the specified course. Supports the ADR 0036 ``?view=minimal`` preset and ``?fields=`` explicit field selection (see the parameter descriptions for details).
- */
-export const v3CourseDetailsRetrieve = <ThrowOnError extends boolean = false>(
-  options: Options<V3CourseDetailsRetrieveData, ThrowOnError>,
-): RequestResult<
-  V3CourseDetailsRetrieveResponses,
-  V3CourseDetailsRetrieveErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).get<
-    V3CourseDetailsRetrieveResponses,
-    V3CourseDetailsRetrieveErrors,
-    ThrowOnError
-  >({
-    responseType: "json",
-    url: "/v3/course_details/{course_id}/",
-    ...options,
-  });
-
-/**
- * Update a course's details
- *
- * Update the details for the specified course.
- */
-export const v3CourseDetailsUpdate = <ThrowOnError extends boolean = false>(
-  options: Options<V3CourseDetailsUpdateData, ThrowOnError>,
-): RequestResult<
-  V3CourseDetailsUpdateResponses,
-  V3CourseDetailsUpdateErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).put<
-    V3CourseDetailsUpdateResponses,
-    V3CourseDetailsUpdateErrors,
-    ThrowOnError
-  >({
-    responseType: "json",
-    url: "/v3/course_details/{course_id}/",
+    url: "/api/authoring/v3/courses/{course_key}/grading/",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -300,7 +462,7 @@ export const v3HomeRetrieve = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v3/home/",
+    url: "/api/authoring/v3/home/",
     ...options,
   });
 
@@ -324,7 +486,7 @@ export const v3HomeCoursesRetrieve = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v3/home/courses/",
+    url: "/api/authoring/v3/home/courses/",
     ...options,
   });
 
@@ -348,7 +510,7 @@ export const v3HomeLibrariesRetrieve = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v3/home/libraries/",
+    url: "/api/authoring/v3/home/libraries/",
     ...options,
   });
 
@@ -356,6 +518,311 @@ export const v3HomeLibrariesRetrieve = <ThrowOnError extends boolean = false>(
  * List courses for the Studio home page (paginated)
  *
  * Returns a paginated list of all courses available to the logged-in user, with optional filtering and ordering. Supersedes ``GET /api/contentstore/v2/home/courses``.
+ */
+export const v4CoursesRetrieve = <ThrowOnError extends boolean = false>(
+  options?: Options<V4CoursesRetrieveData, ThrowOnError>,
+): RequestResult<
+  V4CoursesRetrieveResponses,
+  V4CoursesRetrieveErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    V4CoursesRetrieveResponses,
+    V4CoursesRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/authoring/v4/courses/",
+    ...options,
+  });
+
+/**
+ * Create an xblock
+ *
+ * Create a new xblock under a parent block. The ``parent_locator`` field on the request body identifies the parent and (implicitly) the course.
+ *
+ * @deprecated
+ */
+export const v1XblockCreate = <ThrowOnError extends boolean = false>(
+  options?: Options<V1XblockCreateData, ThrowOnError>,
+): RequestResult<V1XblockCreateResponses, V1XblockCreateErrors, ThrowOnError> =>
+  (options?.client ?? client).post<
+    V1XblockCreateResponses,
+    V1XblockCreateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v1/xblock/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+
+/**
+ * Delete an xblock
+ *
+ * Delete an xblock identified by its usage key.
+ *
+ * @deprecated
+ */
+export const v1XblockDestroy = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblockDestroyData, ThrowOnError>,
+): RequestResult<
+  V1XblockDestroyResponses,
+  V1XblockDestroyErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    V1XblockDestroyResponses,
+    V1XblockDestroyErrors,
+    ThrowOnError
+  >({ url: "/api/contentstore/v1/xblock/{usage_key_string}/", ...options });
+
+/**
+ * Retrieve an xblock
+ *
+ * Retrieve an xblock (and, by default, its nested tree) by usage key. Supports ADR 0036 ``?view=minimal`` to strip contextual fields, plus the legacy ``?fields=`` type-of-response selector.
+ *
+ * @deprecated
+ */
+export const v1XblockRetrieve = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblockRetrieveData, ThrowOnError>,
+): RequestResult<
+  V1XblockRetrieveResponses,
+  V1XblockRetrieveErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    V1XblockRetrieveResponses,
+    V1XblockRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v1/xblock/{usage_key_string}/",
+    ...options,
+  });
+
+/**
+ * Partially update an xblock
+ *
+ * Partially update an xblock identified by its usage key. Only the fields present in the request body are updated.
+ *
+ * @deprecated
+ */
+export const v1XblockPartialUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblockPartialUpdateData, ThrowOnError>,
+): RequestResult<
+  V1XblockPartialUpdateResponses,
+  V1XblockPartialUpdateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    V1XblockPartialUpdateResponses,
+    V1XblockPartialUpdateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v1/xblock/{usage_key_string}/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Update an xblock
+ *
+ * Fully update an xblock identified by its usage key.
+ *
+ * @deprecated
+ */
+export const v1XblockUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<V1XblockUpdateData, ThrowOnError>,
+): RequestResult<V1XblockUpdateResponses, V1XblockUpdateErrors, ThrowOnError> =>
+  (options.client ?? client).put<
+    V1XblockUpdateResponses,
+    V1XblockUpdateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v1/xblock/{usage_key_string}/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Update a course's grading settings
+ *
+ * Partially update the grading settings for the specified course.
+ *
+ * @deprecated
+ */
+export const v3AuthoringGradingPartialUpdate = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<V3AuthoringGradingPartialUpdateData, ThrowOnError>,
+): RequestResult<
+  V3AuthoringGradingPartialUpdateResponses,
+  V3AuthoringGradingPartialUpdateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    V3AuthoringGradingPartialUpdateResponses,
+    V3AuthoringGradingPartialUpdateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v3/authoring_grading/{course_key}/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Retrieve a course's details
+ *
+ * Get an object containing the course details for the specified course. Supports the ADR 0036 ``?view=minimal`` preset and ``?fields=`` explicit field selection (see the parameter descriptions for details).
+ *
+ * @deprecated
+ */
+export const v3CourseDetailsRetrieve = <ThrowOnError extends boolean = false>(
+  options: Options<V3CourseDetailsRetrieveData, ThrowOnError>,
+): RequestResult<
+  V3CourseDetailsRetrieveResponses,
+  V3CourseDetailsRetrieveErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    V3CourseDetailsRetrieveResponses,
+    V3CourseDetailsRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v3/course_details/{course_id}/",
+    ...options,
+  });
+
+/**
+ * Update a course's details
+ *
+ * Update the details for the specified course.
+ *
+ * @deprecated
+ */
+export const v3CourseDetailsUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<V3CourseDetailsUpdateData, ThrowOnError>,
+): RequestResult<
+  V3CourseDetailsUpdateResponses,
+  V3CourseDetailsUpdateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    V3CourseDetailsUpdateResponses,
+    V3CourseDetailsUpdateErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v3/course_details/{course_id}/",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get an object containing all courses and libraries on home page.
+ *
+ * **Example Request**
+ *
+ * GET /api/contentstore/v3/home/
+ * GET /api/contentstore/v3/home/?fields=courses,libraries  (ADR 0036)
+ *
+ * @deprecated
+ */
+export const v3HomeRetrieveLegacy = <ThrowOnError extends boolean = false>(
+  options?: Options<V3HomeRetrieveLegacyData, ThrowOnError>,
+): RequestResult<V3HomeRetrieveLegacyResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    V3HomeRetrieveLegacyResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v3/home/",
+    ...options,
+  });
+
+/**
+ * Get an object containing all courses.
+ *
+ * **Example Request**
+ *
+ * GET /api/contentstore/v3/home/courses/
+ *
+ * @deprecated
+ */
+export const v3HomeCoursesRetrieveLegacy = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<V3HomeCoursesRetrieveLegacyData, ThrowOnError>,
+): RequestResult<
+  V3HomeCoursesRetrieveLegacyResponses,
+  V3HomeCoursesRetrieveLegacyErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    V3HomeCoursesRetrieveLegacyResponses,
+    V3HomeCoursesRetrieveLegacyErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v3/home/courses/",
+    ...options,
+  });
+
+/**
+ * Get an object containing all libraries on home page.
+ *
+ * **Example Request**
+ *
+ * GET /api/contentstore/v3/home/libraries/
+ *
+ * @deprecated
+ */
+export const v3HomeLibrariesRetrieveLegacy = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<V3HomeLibrariesRetrieveLegacyData, ThrowOnError>,
+): RequestResult<
+  V3HomeLibrariesRetrieveLegacyResponses,
+  V3HomeLibrariesRetrieveLegacyErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    V3HomeLibrariesRetrieveLegacyResponses,
+    V3HomeLibrariesRetrieveLegacyErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/contentstore/v3/home/libraries/",
+    ...options,
+  });
+
+/**
+ * List courses for the Studio home page (paginated)
+ *
+ * Returns a paginated list of all courses available to the logged-in user, with optional filtering and ordering. Supersedes ``GET /api/contentstore/v2/home/courses``.
+ *
+ * @deprecated
  */
 export const v4HomeCoursesRetrieve = <ThrowOnError extends boolean = false>(
   options?: Options<V4HomeCoursesRetrieveData, ThrowOnError>,
@@ -370,7 +837,7 @@ export const v4HomeCoursesRetrieve = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseType: "json",
-    url: "/v4/home/courses/",
+    url: "/api/contentstore/v4/home/courses/",
     ...options,
   });
 
@@ -378,6 +845,8 @@ export const v4HomeCoursesRetrieve = <ThrowOnError extends boolean = false>(
  * Get enrollment details for a course
  *
  * Returns the course schedule and supported enrollment modes. No authentication required. Use ?include_expired=1 to include expired enrollment modes.
+ *
+ * @deprecated
  */
 export const apiEnrollmentV2CourseRetrieve = <
   ThrowOnError extends boolean = false,
@@ -395,6 +864,30 @@ export const apiEnrollmentV2CourseRetrieve = <
   >({
     responseType: "json",
     url: "/api/enrollment/v2/course/{course_id}",
+    ...options,
+  });
+
+/**
+ * Get enrollment details for a course
+ *
+ * Returns the course schedule and supported enrollment modes. No authentication required. Use ?include_expired=1 to include expired enrollment modes.
+ */
+export const apiEnrollmentV2CoursesRetrieve = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ApiEnrollmentV2CoursesRetrieveData, ThrowOnError>,
+): RequestResult<
+  ApiEnrollmentV2CoursesRetrieveResponses,
+  ApiEnrollmentV2CoursesRetrieveErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ApiEnrollmentV2CoursesRetrieveResponses,
+    ApiEnrollmentV2CoursesRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/enrollment/v2/courses/{course_id}/",
     ...options,
   });
 
@@ -454,6 +947,8 @@ export const apiEnrollmentV2EnrollmentCreate = <
  * Retrieve a user's enrollment in a course
  *
  * Returns the current user's enrollment for the specified course, or the named user's enrollment when invoked with the {username},{course_id} URL form (server-to-server or staff only).
+ *
+ * @deprecated
  */
 export const apiEnrollmentV2EnrollmentRetrieve = <
   ThrowOnError extends boolean = false,
@@ -478,6 +973,8 @@ export const apiEnrollmentV2EnrollmentRetrieve = <
  * Retrieve a user's enrollment in a course
  *
  * Returns the current user's enrollment for the specified course, or the named user's enrollment when invoked with the {username},{course_id} URL form (server-to-server or staff only).
+ *
+ * @deprecated
  */
 export const apiEnrollmentV2Enrollment__Retrieve = <
   ThrowOnError extends boolean = false,
@@ -614,6 +1111,32 @@ export const apiEnrollmentV2EnrollmentUnenrollCreate = <
  * List all course enrollments (admin-only, paginated)
  *
  * Admin-only paginated list of CourseEnrollment records, optionally filtered by course_key, course_keys, username, or email, and optionally ordered.
+ *
+ * @deprecated
+ */
+export const apiEnrollmentV2EnrollmentsListLegacy = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ApiEnrollmentV2EnrollmentsListLegacyData, ThrowOnError>,
+): RequestResult<
+  ApiEnrollmentV2EnrollmentsListLegacyResponses,
+  ApiEnrollmentV2EnrollmentsListLegacyErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ApiEnrollmentV2EnrollmentsListLegacyResponses,
+    ApiEnrollmentV2EnrollmentsListLegacyErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/enrollment/v2/enrollments",
+    ...options,
+  });
+
+/**
+ * List all course enrollments (admin-only, paginated)
+ *
+ * Admin-only paginated list of CourseEnrollment records, optionally filtered by course_key, course_keys, username, or email, and optionally ordered.
  */
 export const apiEnrollmentV2EnrollmentsList = <
   ThrowOnError extends boolean = false,
@@ -631,6 +1154,30 @@ export const apiEnrollmentV2EnrollmentsList = <
   >({
     responseType: "json",
     url: "/api/enrollment/v2/enrollments/",
+    ...options,
+  });
+
+/**
+ * Retrieve a user's enrollment in a course
+ *
+ * Returns the current user's enrollment for the specified course, or the named user's enrollment when invoked with the {username},{course_id} URL form (server-to-server or staff only).
+ */
+export const apiEnrollmentV2Enrollments__Retrieve = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ApiEnrollmentV2EnrollmentsRetrieveData, ThrowOnError>,
+): RequestResult<
+  ApiEnrollmentV2EnrollmentsRetrieveResponses,
+  ApiEnrollmentV2EnrollmentsRetrieveErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ApiEnrollmentV2EnrollmentsRetrieveResponses,
+    ApiEnrollmentV2EnrollmentsRetrieveErrors,
+    ThrowOnError
+  >({
+    responseType: "json",
+    url: "/api/enrollment/v2/enrollments/{username},{course_id}/",
     ...options,
   });
 

@@ -95,6 +95,142 @@ export type CourseHomeTabSerializerV2 = {
 };
 
 /**
+ * One PDF textbook of a course, as stored in the course's settings.
+ *
+ * A stored textbook can lack ``id``, ``chapters`` or ``tab_title``: imported
+ * courses may carry textbooks written by other tools, such as the single-file
+ * form that has a ``url`` and no chapters. Such a textbook is returned with
+ * ``null`` for the missing scalar and an empty chapter list, rather than
+ * failing the whole page. A stored ``null`` chapter list is returned empty
+ * too. Stored keys not declared here are not returned.
+ */
+export type CourseTextbook = {
+  /**
+   * Identifier of the textbook, unique within its course. Null when the stored textbook has none.
+   */
+  id?: string | null;
+  /**
+   * Chapters in reading order. Empty when the stored textbook has no chapter list.
+   */
+  chapters?: Array<TextbookChapter>;
+  /**
+   * Title of the course tab that opens the textbook. Null when the stored textbook has none.
+   */
+  tab_title?: string | null;
+};
+
+/**
+ * The course's video upload and transcript settings.
+ */
+export type CourseVideoSettings = {
+  /**
+   * Studio address that uploads a video's thumbnail image.
+   */
+  image_upload_url: string;
+  /**
+   * Studio address that manages the course's video uploads.
+   */
+  video_handler_url: string;
+  /**
+   * Studio address that downloads the course's video encodings as CSV.
+   */
+  encodings_download_url: string;
+  /**
+   * Address of the image shown for videos without one.
+   */
+  default_video_image_url: string;
+  /**
+   * How many videos a client may upload at the same time.
+   */
+  concurrent_upload_limit: number;
+  /**
+   * Accepted video file extensions.
+   */
+  video_supported_file_formats: Array<string>;
+  /**
+   * Largest accepted video file, in gigabytes.
+   */
+  video_upload_max_file_size: number;
+  /**
+   * Limits for video thumbnail images.
+   */
+  video_image_settings: VideoSettingsImage;
+  /**
+   * Whether third-party transcription is enabled for the course.
+   */
+  is_video_transcript_enabled: boolean;
+  /**
+   * Whether AI translation of transcripts is enabled for the course.
+   */
+  is_ai_translations_enabled: boolean;
+  /**
+   * The course's transcription preferences. Null when transcripts are disabled or none are saved.
+   */
+  active_transcript_preferences: VideoSettingsTranscriptPreferences | null;
+  /**
+   * Whether the course's organization has credentials for each transcription provider, keyed by provider name. Null when transcripts are disabled.
+   */
+  transcript_credentials: {
+    [key: string]: boolean;
+  } | null;
+  /**
+   * Every language a transcript may be written in, ordered by display name.
+   */
+  transcript_available_languages: Array<TranscriptLanguage>;
+  /**
+   * Studio handler addresses and options for transcripts.
+   */
+  video_transcript_settings: VideoSettingsTranscript;
+};
+
+/**
+ * Plain-DRF serializer describing the ADR 0029 error envelope.
+ *
+ * Intended for OpenAPI response declarations so error responses are
+ * documented with their real shape, e.g. with drf-spectacular::
+ *
+ * @extend_schema(responses={
+ * 200: MyResourceSerializer,
+ * 404: ErrorResponseSerializer,
+ * })
+ *
+ * It is a documentation serializer: nothing deserializes through it, so it
+ * implements no ``create``/``update``.
+ */
+export type ErrorResponse = {
+  /**
+   * Error-type URI (https://docs.openedx.org/errors/<slug>).
+   */
+  type: string;
+  /**
+   * Human-readable error title.
+   */
+  title: string;
+  /**
+   * HTTP status code, repeated from the response.
+   */
+  status: number;
+  /**
+   * Flattened human-readable error message.
+   */
+  detail: string;
+  /**
+   * Path of the request that produced the error.
+   */
+  instance?: string;
+  /**
+   * End-user-facing message, when the raising code supplied one.
+   */
+  user_message?: string;
+  /**
+   * Per-field validation errors (validation errors only).
+   */
+  errors?: {
+    [key: string]: Array<string>;
+  };
+};
+
+/**
  * Serializer for instructor info
  */
 export type InstructorInfo = {
@@ -134,6 +270,34 @@ export type LibraryView = {
 };
 
 export type NullEnum = never;
+
+export type PaginatedCourseTextbookList = {
+  /**
+   * Total number of items.
+   */
+  count: number;
+  /**
+   * Total number of pages.
+   */
+  num_pages: number;
+  /**
+   * Number of this page, starting at 1.
+   */
+  current_page: number;
+  /**
+   * Zero-based index of the first item on this page.
+   */
+  start: number;
+  /**
+   * Address of the next page, or null on the last page.
+   */
+  next: string | null;
+  /**
+   * Address of the previous page, or null on the first page.
+   */
+  previous: string | null;
+  results: Array<CourseTextbook>;
+};
 
 export type PaginatedV4HomeCoursesResponse = {
   /**
@@ -300,6 +464,37 @@ export type StudioHome = {
 };
 
 /**
+ * One chapter of a course PDF textbook.
+ *
+ * A stored chapter missing ``title`` or ``url``, or holding null for either,
+ * is returned with an empty string in its place rather than failing the page.
+ */
+export type TextbookChapter = {
+  /**
+   * Chapter title shown in the textbook's table of contents. Empty when the stored chapter has none.
+   */
+  title?: string;
+  /**
+   * Address of the chapter's PDF file, usually a course asset path. Empty when the stored chapter has none.
+   */
+  url?: string;
+};
+
+/**
+ * A language a transcript may be written in.
+ */
+export type TranscriptLanguage = {
+  /**
+   * Language code.
+   */
+  language_code: string;
+  /**
+   * Display name of the language.
+   */
+  language_text: string;
+};
+
+/**
  * Serializer for unsucceeded course
  */
 export type UnsucceededCourse = {
@@ -325,6 +520,114 @@ export type UnsucceededCourseSerializerV2 = {
   is_failed: boolean;
   is_in_progress: boolean;
   dismiss_link: string;
+};
+
+/**
+ * Limits that apply to video thumbnail images uploaded to the course.
+ */
+export type VideoSettingsImage = {
+  /**
+   * Whether thumbnail images may be uploaded for the course's videos.
+   */
+  video_image_upload_enabled: boolean;
+  /**
+   * Largest accepted image, in bytes.
+   */
+  max_size: number;
+  /**
+   * Smallest accepted image, in bytes.
+   */
+  min_size: number;
+  /**
+   * Largest accepted image width, in pixels.
+   */
+  max_width: number;
+  /**
+   * Largest accepted image height, in pixels.
+   */
+  max_height: number;
+  /**
+   * Accepted image file extensions, each mapped to its MIME type.
+   */
+  supported_file_formats: {
+    [key: string]: string;
+  };
+};
+
+/**
+ * Studio handler addresses and options for the course's video transcripts.
+ */
+export type VideoSettingsTranscript = {
+  /**
+   * Studio address that downloads a transcript.
+   */
+  transcript_download_handler_url: string;
+  /**
+   * Studio address that uploads a transcript.
+   */
+  transcript_upload_handler_url: string;
+  /**
+   * Studio address that deletes a transcript of this course.
+   */
+  transcript_delete_handler_url: string;
+  /**
+   * File format transcripts are downloaded in.
+   */
+  transcript_download_file_format: string;
+  /**
+   * Studio address that saves the course's transcript preferences. Null when transcripts are disabled.
+   */
+  transcript_preferences_handler_url: string | null;
+  /**
+   * Studio address that saves transcript provider credentials. Null when transcripts are disabled.
+   */
+  transcript_credentials_handler_url: string | null;
+  /**
+   * Third-party transcription plans, keyed by provider name, with each plan's options as the provider defines them. Null when transcripts are disabled.
+   */
+  transcription_plans: {
+    [key: string]: {
+      [key: string]: unknown;
+    };
+  } | null;
+};
+
+/**
+ * The course's saved preferences for third-party transcription.
+ */
+export type VideoSettingsTranscriptPreferences = {
+  /**
+   * Key of the course the preferences belong to.
+   */
+  course_id: string;
+  /**
+   * Transcription provider.
+   */
+  provider: string;
+  /**
+   * Cielo24 fidelity level, when Cielo24 is used.
+   */
+  cielo24_fidelity: string | null;
+  /**
+   * Cielo24 turnaround, when Cielo24 is used.
+   */
+  cielo24_turnaround: string | null;
+  /**
+   * 3Play Media turnaround, when 3Play Media is used.
+   */
+  three_play_turnaround: string | null;
+  /**
+   * Language codes transcripts are requested in.
+   */
+  preferred_languages: Array<string>;
+  /**
+   * Language code of the videos' spoken language.
+   */
+  video_source_language: string | null;
+  /**
+   * When the preferences were last changed.
+   */
+  modified: string;
 };
 
 /**
@@ -402,6 +705,94 @@ export type Xblock = {
 };
 
 /**
+ * Transcript availability of one video block, across its declared sources.
+ */
+export type YoutubeTranscriptCheckResult = {
+  /**
+   * Identifiers of the HTML5 sources that already have a transcript stored for this course.
+   */
+  html5_local: Array<string>;
+  /**
+   * Whether exactly two HTML5 sources were found and their stored transcripts are identical.
+   */
+  html5_equal: boolean;
+  /**
+   * Whether the block declares a YouTube source, which takes priority over HTML5 sources.
+   */
+  is_youtube_mode: boolean;
+  /**
+   * Whether a transcript for the YouTube source is already stored for this course.
+   */
+  youtube_local: boolean;
+  /**
+   * Whether YouTube is currently serving a transcript for the video.
+   */
+  youtube_server: boolean;
+  /**
+   * Whether the transcript on YouTube differs from the stored one.
+   */
+  youtube_diff: boolean;
+  /**
+   * Name of the transcript currently attached to the block, or null when none is attached.
+   */
+  current_item_subs?: string | null;
+  /**
+   * Outcome of the check: "Success" when the block could be inspected.
+   */
+  status: string;
+  /**
+   * Action the caller should take next: replace, found, import, choose, use_existing, or not_found.
+   */
+  command: string;
+};
+
+/**
+ * Input identifying the video block to import a YouTube transcript into.
+ */
+export type YoutubeTranscriptImportRequest = {
+  /**
+   * Usage key of the video block to import the transcript into.
+   */
+  locator: string;
+  /**
+   * Video sources declared on the block. An entry of type "youtube" is required.
+   */
+  videos: Array<YoutubeTranscriptVideo>;
+};
+
+/**
+ * Outcome of importing a YouTube transcript into a video block.
+ */
+export type YoutubeTranscriptImportResult = {
+  /**
+   * Video pipeline identifier the transcript was attached to. Null when the block lives in a content library, where transcripts are stored on the block itself.
+   */
+  edx_video_id: string | null;
+  /**
+   * Outcome of the import: "Success" when the transcript was stored.
+   */
+  status: string;
+};
+
+/**
+ * One entry of the video list identifying a source to inspect or import from.
+ */
+export type YoutubeTranscriptVideo = {
+  /**
+   * Source kind. "youtube" names a YouTube video id, "edx_video_id" names a video in the video pipeline, and any other value is treated as an HTML5 source.
+   */
+  type: string;
+  /**
+   * Identifier of the source, interpreted according to the type field.
+   */
+  video: string;
+  /**
+   * Playback mode of an HTML5 source, such as "mp4" or "webm".
+   */
+  mode?: string;
+};
+
+/**
  * Serializer for course grading model data
  */
 export type AuthoringGradingCourseGradingV0 = {
@@ -444,15 +835,17 @@ export type AuthoringGradingGradersV0 = {
 };
 
 /**
- * Serializes CourseEnrollment model and returns a subset of fields returned
- * by the CourseEnrollmentSerializer.
+ * Serializes CourseEnrollment models
+ *
+ * Aggregates all data from the Course Enrollment table, and pulls in the serialization for
+ * the Course block and course modes, to give a complete representation of course enrollment.
  */
 export type CourseEnrollment = {
   readonly created: string | null;
   mode?: string;
   is_active?: boolean;
+  course_details: EnrollmentCourse;
   readonly user: string;
-  course_id: string;
 };
 
 /**
@@ -472,10 +865,29 @@ export type CourseEnrollmentAllowed = {
   user?: number | null;
 };
 
+/**
+ * Serializes CourseEnrollment model and returns a subset of fields returned
+ * by the CourseEnrollmentSerializer.
+ */
+export type CourseEnrollmentsApiList = {
+  readonly created: string | null;
+  mode?: string;
+  is_active?: boolean;
+  readonly user: string;
+  course_id: string;
+};
+
 export type PaginatedCourseEnrollmentList = {
+  count: number;
   next?: string | null;
   previous?: string | null;
   results: Array<CourseEnrollment>;
+};
+
+export type PaginatedCourseEnrollmentsApiListList = {
+  next?: string | null;
+  previous?: string | null;
+  results: Array<CourseEnrollmentsApiList>;
 };
 
 /**
@@ -618,13 +1030,15 @@ export type PaginatedV4HomeCoursesResponseWritable = {
 };
 
 /**
- * Serializes CourseEnrollment model and returns a subset of fields returned
- * by the CourseEnrollmentSerializer.
+ * Serializes CourseEnrollment models
+ *
+ * Aggregates all data from the Course Enrollment table, and pulls in the serialization for
+ * the Course block and course modes, to give a complete representation of course enrollment.
  */
 export type CourseEnrollmentWritable = {
   mode?: string;
   is_active?: boolean;
-  course_id: string;
+  course_details: EnrollmentCourseWritable;
 };
 
 /**
@@ -643,10 +1057,27 @@ export type CourseEnrollmentAllowedWritable = {
   user?: number | null;
 };
 
+/**
+ * Serializes CourseEnrollment model and returns a subset of fields returned
+ * by the CourseEnrollmentSerializer.
+ */
+export type CourseEnrollmentsApiListWritable = {
+  mode?: string;
+  is_active?: boolean;
+  course_id: string;
+};
+
 export type PaginatedCourseEnrollmentListWritable = {
+  count: number;
   next?: string | null;
   previous?: string | null;
   results: Array<CourseEnrollmentWritable>;
+};
+
+export type PaginatedCourseEnrollmentsApiListListWritable = {
+  next?: string | null;
+  previous?: string | null;
+  results: Array<CourseEnrollmentsApiListWritable>;
 };
 
 /**
@@ -678,11 +1109,667 @@ export type EnrollmentCourseWritable = {
   invite_only: boolean;
 };
 
+export type V1CoursesYoutubeTranscriptChecksListData = {
+  body?: never;
+  path: {
+    course_key: string;
+  };
+  query: {
+    /**
+     * JSON object naming the video to inspect. It carries a `locator` holding the usage key of the video block, and a `videos` list of `{type, video, mode}` entries describing the block's declared sources.
+     */
+    data: string;
+  };
+  url: "/api/authoring/v1/courses/{course_key}/youtube_transcript_checks/";
+};
+
+export type V1CoursesYoutubeTranscriptChecksListErrors = {
+  /**
+   * The request body is invalid.
+   */
+  400: ErrorResponse;
+  /**
+   * The requester is not authenticated.
+   */
+  401: ErrorResponse;
+  /**
+   * The requester cannot author the course or the addressed video.
+   */
+  403: ErrorResponse;
+  /**
+   * The course or the addressed video block does not exist.
+   */
+  404: ErrorResponse;
+};
+
+export type V1CoursesYoutubeTranscriptChecksListError =
+  V1CoursesYoutubeTranscriptChecksListErrors[keyof V1CoursesYoutubeTranscriptChecksListErrors];
+
+export type V1CoursesYoutubeTranscriptChecksListResponses = {
+  /**
+   * The transcript availability of the requested video.
+   */
+  200: Array<YoutubeTranscriptCheckResult>;
+};
+
+export type V1CoursesYoutubeTranscriptChecksListResponse =
+  V1CoursesYoutubeTranscriptChecksListResponses[keyof V1CoursesYoutubeTranscriptChecksListResponses];
+
+export type V1CoursesYoutubeTranscriptImportsCreateData = {
+  body: YoutubeTranscriptImportRequest;
+  path: {
+    course_key: string;
+  };
+  query?: never;
+  url: "/api/authoring/v1/courses/{course_key}/youtube_transcript_imports/";
+};
+
+export type V1CoursesYoutubeTranscriptImportsCreateErrors = {
+  /**
+   * The request body is invalid.
+   */
+  400: ErrorResponse;
+  /**
+   * The requester is not authenticated.
+   */
+  401: ErrorResponse;
+  /**
+   * The requester cannot author the course or the addressed video.
+   */
+  403: ErrorResponse;
+  /**
+   * The course or the addressed video block does not exist.
+   */
+  404: ErrorResponse;
+};
+
+export type V1CoursesYoutubeTranscriptImportsCreateError =
+  V1CoursesYoutubeTranscriptImportsCreateErrors[keyof V1CoursesYoutubeTranscriptImportsCreateErrors];
+
+export type V1CoursesYoutubeTranscriptImportsCreateResponses = {
+  /**
+   * The transcript was downloaded and stored.
+   */
+  200: YoutubeTranscriptImportResult;
+};
+
+export type V1CoursesYoutubeTranscriptImportsCreateResponse =
+  V1CoursesYoutubeTranscriptImportsCreateResponses[keyof V1CoursesYoutubeTranscriptImportsCreateResponses];
+
+export type V1XblocksCreateData = {
+  body?: Xblock;
+  path?: never;
+  query?: never;
+  url: "/api/authoring/v1/xblocks/";
+};
+
+export type V1XblocksCreateErrors = {
+  /**
+   * Request body failed validation.
+   */
+  400: unknown;
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester does not have permission for this xblock's course.
+   */
+  403: unknown;
+  /**
+   * The requested xblock does not exist.
+   */
+  404: unknown;
+  /**
+   * Requested representation is not available (e.g. non-JSON ``Accept``).
+   */
+  406: unknown;
+};
+
+export type V1XblocksCreateResponses = {
+  /**
+   * The xblock was created successfully.
+   */
+  200: Xblock;
+};
+
+export type V1XblocksCreateResponse =
+  V1XblocksCreateResponses[keyof V1XblocksCreateResponses];
+
+export type V1XblocksDestroyData = {
+  body?: never;
+  path: {
+    /**
+     * Usage key identifying the xblock (e.g. ``block-v1:edX+DemoX+Demo_Course+type@vertical+block@abcd``). Also accepts legacy ``i4x://`` locators.
+     */
+    usage_key_string: string;
+  };
+  query?: never;
+  url: "/api/authoring/v1/xblocks/{usage_key_string}/";
+};
+
+export type V1XblocksDestroyErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester does not have permission for this xblock's course.
+   */
+  403: unknown;
+  /**
+   * The requested xblock does not exist.
+   */
+  404: unknown;
+  /**
+   * Requested representation is not available (e.g. non-JSON ``Accept``).
+   */
+  406: unknown;
+};
+
+export type V1XblocksDestroyResponses = {
+  /**
+   * The xblock was deleted successfully.
+   */
+  200: unknown;
+};
+
+export type V1XblocksRetrieveData = {
+  body?: never;
+  path: {
+    /**
+     * Usage key identifying the xblock (e.g. ``block-v1:edX+DemoX+Demo_Course+type@vertical+block@abcd``). Also accepts legacy ``i4x://`` locators.
+     */
+    usage_key_string: string;
+  };
+  query?: {
+    /**
+     * **Legacy pass-through** (v0/v1 semantics). Selects a *type* of response rather than a subset of top-level keys:
+     * * ``fields=graderType`` — return the grader-type value directly
+     * * ``fields=ancestorInfo`` — return concise ancestor info
+     * * ``fields=customReadToken`` — include parent + children on the response
+     * Note: this is **not** the ADR 0036 ``?fields=`` CSV subset convention. New callers should use ``?view=minimal`` instead.
+     *
+     * @deprecated
+     */
+    fields?: string;
+    /**
+     * ADR 0036 response preset. ``minimal`` drops heavy/contextual xblock fields (``data``, ``metadata``, ``fields``, ``student_view_data``, ``edited_on``, ``published`` …) and keeps only the structural fields (``id``, ``display_name``, ``category``, ``children``, ``has_children``, ``studio_url``). Omit the parameter to receive the full xblock response.
+     */
+    view?: "minimal";
+  };
+  url: "/api/authoring/v1/xblocks/{usage_key_string}/";
+};
+
+export type V1XblocksRetrieveErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester does not have permission for this xblock's course.
+   */
+  403: unknown;
+  /**
+   * The requested xblock does not exist.
+   */
+  404: unknown;
+  /**
+   * Requested representation is not available (e.g. non-JSON ``Accept``).
+   */
+  406: unknown;
+};
+
+export type V1XblocksRetrieveResponses = {
+  /**
+   * The xblock representation.
+   */
+  200: Xblock;
+};
+
+export type V1XblocksRetrieveResponse =
+  V1XblocksRetrieveResponses[keyof V1XblocksRetrieveResponses];
+
+export type V1XblocksPartialUpdateData = {
+  body?: PatchedXblock;
+  path: {
+    /**
+     * Usage key identifying the xblock (e.g. ``block-v1:edX+DemoX+Demo_Course+type@vertical+block@abcd``). Also accepts legacy ``i4x://`` locators.
+     */
+    usage_key_string: string;
+  };
+  query?: never;
+  url: "/api/authoring/v1/xblocks/{usage_key_string}/";
+};
+
+export type V1XblocksPartialUpdateErrors = {
+  /**
+   * Request body failed validation.
+   */
+  400: unknown;
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester does not have permission for this xblock's course.
+   */
+  403: unknown;
+  /**
+   * The requested xblock does not exist.
+   */
+  404: unknown;
+  /**
+   * Requested representation is not available (e.g. non-JSON ``Accept``).
+   */
+  406: unknown;
+};
+
+export type V1XblocksPartialUpdateResponses = {
+  /**
+   * The xblock was updated successfully.
+   */
+  200: Xblock;
+};
+
+export type V1XblocksPartialUpdateResponse =
+  V1XblocksPartialUpdateResponses[keyof V1XblocksPartialUpdateResponses];
+
+export type V1XblocksUpdateData = {
+  body?: Xblock;
+  path: {
+    /**
+     * Usage key identifying the xblock (e.g. ``block-v1:edX+DemoX+Demo_Course+type@vertical+block@abcd``). Also accepts legacy ``i4x://`` locators.
+     */
+    usage_key_string: string;
+  };
+  query?: never;
+  url: "/api/authoring/v1/xblocks/{usage_key_string}/";
+};
+
+export type V1XblocksUpdateErrors = {
+  /**
+   * Request body failed validation.
+   */
+  400: unknown;
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester does not have permission for this xblock's course.
+   */
+  403: unknown;
+  /**
+   * The requested xblock does not exist.
+   */
+  404: unknown;
+  /**
+   * Requested representation is not available (e.g. non-JSON ``Accept``).
+   */
+  406: unknown;
+};
+
+export type V1XblocksUpdateResponses = {
+  /**
+   * The xblock was updated successfully.
+   */
+  200: Xblock;
+};
+
+export type V1XblocksUpdateResponse =
+  V1XblocksUpdateResponses[keyof V1XblocksUpdateResponses];
+
+export type V2CoursesTextbooksListData = {
+  body?: never;
+  path: {
+    course_key: string;
+  };
+  query?: {
+    /**
+     * A page number within the paginated result set.
+     */
+    page?: number;
+    /**
+     * Number of results to return per page.
+     */
+    page_size?: number;
+  };
+  url: "/api/authoring/v2/courses/{course_key}/textbooks/";
+};
+
+export type V2CoursesTextbooksListErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: ErrorResponse;
+  /**
+   * The requester cannot view the pages and resources of this course.
+   */
+  403: ErrorResponse;
+  /**
+   * The course does not exist, or the requested page is out of range.
+   */
+  404: ErrorResponse;
+};
+
+export type V2CoursesTextbooksListError =
+  V2CoursesTextbooksListErrors[keyof V2CoursesTextbooksListErrors];
+
+export type V2CoursesTextbooksListResponses = {
+  /**
+   * A page of the course's textbooks.
+   */
+  200: PaginatedCourseTextbookList;
+};
+
+export type V2CoursesTextbooksListResponse =
+  V2CoursesTextbooksListResponses[keyof V2CoursesTextbooksListResponses];
+
+export type V2CoursesVideoSettingsRetrieveData = {
+  body?: never;
+  path: {
+    course_key: string;
+  };
+  query?: never;
+  url: "/api/authoring/v2/courses/{course_key}/video_settings/";
+};
+
+export type V2CoursesVideoSettingsRetrieveErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: ErrorResponse;
+  /**
+   * The requester does not have Studio read access to this course.
+   */
+  403: ErrorResponse;
+  /**
+   * The course does not exist.
+   */
+  404: ErrorResponse;
+};
+
+export type V2CoursesVideoSettingsRetrieveError =
+  V2CoursesVideoSettingsRetrieveErrors[keyof V2CoursesVideoSettingsRetrieveErrors];
+
+export type V2CoursesVideoSettingsRetrieveResponses = {
+  /**
+   * The course's video settings.
+   */
+  200: CourseVideoSettings;
+};
+
+export type V2CoursesVideoSettingsRetrieveResponse =
+  V2CoursesVideoSettingsRetrieveResponses[keyof V2CoursesVideoSettingsRetrieveResponses];
+
+export type V3CoursesDetailsRetrieveData = {
+  body?: never;
+  path: {
+    /**
+     * Course ID
+     */
+    course_id: string;
+  };
+  query?: {
+    /**
+     * ADR 0036 explicit field selection. Comma-separated list of top-level keys to include in the response (e.g. ``course_id,title,start_date``). When combined with ``?view=``, the preset is applied first and ``?fields=`` is applied to the result. Unknown keys are silently skipped.
+     */
+    fields?: string;
+    /**
+     * ADR 0036 response preset. ``minimal`` drops heavy fields (overview, syllabus, description, instructor_info, learning_info, banner/video assets, license) leaving only identification, schedule, and flags. Omit the parameter to receive the full response.
+     */
+    view?: "minimal";
+  };
+  url: "/api/authoring/v3/courses/{course_id}/details/";
+};
+
+export type V3CoursesDetailsRetrieveErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester cannot access the specified course.
+   */
+  403: unknown;
+  /**
+   * The requested course does not exist.
+   */
+  404: unknown;
+};
+
+export type V3CoursesDetailsRetrieveResponses = {
+  /**
+   * Course details retrieved successfully. The schema below is the full default response; when ``?view=minimal`` and/or ``?fields=`` is supplied, the response contains a subset of these top-level keys (see ADR 0036).
+   */
+  200: CourseDetails;
+};
+
+export type V3CoursesDetailsRetrieveResponse =
+  V3CoursesDetailsRetrieveResponses[keyof V3CoursesDetailsRetrieveResponses];
+
+export type V3CoursesDetailsUpdateData = {
+  body: CourseDetailsWritable;
+  path: {
+    /**
+     * Course ID
+     */
+    course_id: string;
+  };
+  query?: never;
+  url: "/api/authoring/v3/courses/{course_id}/details/";
+};
+
+export type V3CoursesDetailsUpdateErrors = {
+  /**
+   * Bad request — invalid data.
+   */
+  400: unknown;
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester cannot access the specified course.
+   */
+  403: unknown;
+  /**
+   * The requested course does not exist.
+   */
+  404: unknown;
+};
+
+export type V3CoursesDetailsUpdateResponses = {
+  /**
+   * Course details updated successfully.
+   */
+  200: CourseDetails;
+};
+
+export type V3CoursesDetailsUpdateResponse =
+  V3CoursesDetailsUpdateResponses[keyof V3CoursesDetailsUpdateResponses];
+
+export type V3CoursesGradingPartialUpdateData = {
+  body?: PatchedauthoringGradingCourseGradingV0;
+  path: {
+    /**
+     * OEP-68 course key (e.g. course-v1:org+course+run).
+     */
+    course_key: string;
+  };
+  query?: never;
+  url: "/api/authoring/v3/courses/{course_key}/grading/";
+};
+
+export type V3CoursesGradingPartialUpdateErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester cannot access the specified course.
+   */
+  403: unknown;
+  /**
+   * The requested course does not exist.
+   */
+  404: unknown;
+};
+
+export type V3CoursesGradingPartialUpdateResponses = {
+  /**
+   * Grading settings updated successfully.
+   */
+  200: AuthoringGradingCourseGradingV0;
+};
+
+export type V3CoursesGradingPartialUpdateResponse =
+  V3CoursesGradingPartialUpdateResponses[keyof V3CoursesGradingPartialUpdateResponses];
+
+export type V3HomeRetrieveData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * ADR 0036 explicit field selection. Comma-separated list of top-level keys to include in the response (e.g. ``courses,libraries,studio_name``). Omit for the full response. Unknown keys are silently skipped.
+     */
+    fields?: string;
+    /**
+     * Filter by course org
+     */
+    org?: string;
+  };
+  url: "/api/authoring/v3/home/";
+};
+
+export type V3HomeRetrieveResponses = {
+  200: StudioHome;
+};
+
+export type V3HomeRetrieveResponse =
+  V3HomeRetrieveResponses[keyof V3HomeRetrieveResponses];
+
+export type V3HomeCoursesRetrieveData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Query param to filter by course org
+     */
+    org?: string;
+  };
+  url: "/api/authoring/v3/home/courses/";
+};
+
+export type V3HomeCoursesRetrieveErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+};
+
+export type V3HomeCoursesRetrieveResponses = {
+  200: CourseHomeTab;
+};
+
+export type V3HomeCoursesRetrieveResponse =
+  V3HomeCoursesRetrieveResponses[keyof V3HomeCoursesRetrieveResponses];
+
+export type V3HomeLibrariesRetrieveData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Query param to filter by migrated status of library. If present (true or false), it will filter by migration status else it will return all legacy libraries.
+     */
+    is_migrated?: boolean;
+    /**
+     * Query param to filter by course org
+     */
+    org?: string;
+  };
+  url: "/api/authoring/v3/home/libraries/";
+};
+
+export type V3HomeLibrariesRetrieveErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+};
+
+export type V3HomeLibrariesRetrieveResponses = {
+  200: LibraryTab;
+};
+
+export type V3HomeLibrariesRetrieveResponse =
+  V3HomeLibrariesRetrieveResponses[keyof V3HomeLibrariesRetrieveResponses];
+
+export type V4CoursesRetrieveData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Filter to active courses only
+     */
+    active_only?: string;
+    /**
+     * Filter to archived courses only
+     */
+    archived_only?: string;
+    /**
+     * Deprecated alias for 'ordering' (ADR 0033). Use 'ordering' instead.
+     *
+     * @deprecated
+     */
+    order?: string;
+    /**
+     * Order by course field: display_name, org, number, or run (ADR 0033 standard parameter).
+     */
+    ordering?: string;
+    /**
+     * Filter by course org
+     */
+    org?: string;
+    /**
+     * Page number for pagination
+     */
+    page?: string;
+    /**
+     * Number of courses per page (default 10, max 100)
+     */
+    page_size?: string;
+    /**
+     * Filter by course name, org, or number
+     */
+    search?: string;
+  };
+  url: "/api/authoring/v4/courses/";
+};
+
+export type V4CoursesRetrieveErrors = {
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+};
+
+export type V4CoursesRetrieveResponses = {
+  /**
+   * Paginated course list retrieved successfully.
+   */
+  200: PaginatedV4HomeCoursesResponse;
+};
+
+export type V4CoursesRetrieveResponse =
+  V4CoursesRetrieveResponses[keyof V4CoursesRetrieveResponses];
+
 export type V1XblockCreateData = {
   body?: Xblock;
   path?: never;
   query?: never;
-  url: "/v1/xblock/";
+  url: "/api/contentstore/v1/xblock/";
 };
 
 export type V1XblockCreateErrors = {
@@ -727,7 +1814,7 @@ export type V1XblockDestroyData = {
     usage_key_string: string;
   };
   query?: never;
-  url: "/v1/xblock/{usage_key_string}/";
+  url: "/api/contentstore/v1/xblock/{usage_key_string}/";
 };
 
 export type V1XblockDestroyErrors = {
@@ -780,7 +1867,7 @@ export type V1XblockRetrieveData = {
      */
     view?: "minimal";
   };
-  url: "/v1/xblock/{usage_key_string}/";
+  url: "/api/contentstore/v1/xblock/{usage_key_string}/";
 };
 
 export type V1XblockRetrieveErrors = {
@@ -821,7 +1908,7 @@ export type V1XblockPartialUpdateData = {
     usage_key_string: string;
   };
   query?: never;
-  url: "/v1/xblock/{usage_key_string}/";
+  url: "/api/contentstore/v1/xblock/{usage_key_string}/";
 };
 
 export type V1XblockPartialUpdateErrors = {
@@ -866,7 +1953,7 @@ export type V1XblockUpdateData = {
     usage_key_string: string;
   };
   query?: never;
-  url: "/v1/xblock/{usage_key_string}/";
+  url: "/api/contentstore/v1/xblock/{usage_key_string}/";
 };
 
 export type V1XblockUpdateErrors = {
@@ -911,7 +1998,7 @@ export type V3AuthoringGradingPartialUpdateData = {
     course_key: string;
   };
   query?: never;
-  url: "/v3/authoring_grading/{course_key}/";
+  url: "/api/contentstore/v3/authoring_grading/{course_key}/";
 };
 
 export type V3AuthoringGradingPartialUpdateErrors = {
@@ -957,7 +2044,7 @@ export type V3CourseDetailsRetrieveData = {
      */
     view?: "minimal";
   };
-  url: "/v3/course_details/{course_id}/";
+  url: "/api/contentstore/v3/course_details/{course_id}/";
 };
 
 export type V3CourseDetailsRetrieveErrors = {
@@ -994,7 +2081,7 @@ export type V3CourseDetailsUpdateData = {
     course_id: string;
   };
   query?: never;
-  url: "/v3/course_details/{course_id}/";
+  url: "/api/contentstore/v3/course_details/{course_id}/";
 };
 
 export type V3CourseDetailsUpdateErrors = {
@@ -1026,7 +2113,7 @@ export type V3CourseDetailsUpdateResponses = {
 export type V3CourseDetailsUpdateResponse =
   V3CourseDetailsUpdateResponses[keyof V3CourseDetailsUpdateResponses];
 
-export type V3HomeRetrieveData = {
+export type V3HomeRetrieveLegacyData = {
   body?: never;
   path?: never;
   query?: {
@@ -1039,17 +2126,17 @@ export type V3HomeRetrieveData = {
      */
     org?: string;
   };
-  url: "/v3/home/";
+  url: "/api/contentstore/v3/home/";
 };
 
-export type V3HomeRetrieveResponses = {
+export type V3HomeRetrieveLegacyResponses = {
   200: StudioHome;
 };
 
-export type V3HomeRetrieveResponse =
-  V3HomeRetrieveResponses[keyof V3HomeRetrieveResponses];
+export type V3HomeRetrieveLegacyResponse =
+  V3HomeRetrieveLegacyResponses[keyof V3HomeRetrieveLegacyResponses];
 
-export type V3HomeCoursesRetrieveData = {
+export type V3HomeCoursesRetrieveLegacyData = {
   body?: never;
   path?: never;
   query?: {
@@ -1058,24 +2145,24 @@ export type V3HomeCoursesRetrieveData = {
      */
     org?: string;
   };
-  url: "/v3/home/courses/";
+  url: "/api/contentstore/v3/home/courses/";
 };
 
-export type V3HomeCoursesRetrieveErrors = {
+export type V3HomeCoursesRetrieveLegacyErrors = {
   /**
    * The requester is not authenticated.
    */
   401: unknown;
 };
 
-export type V3HomeCoursesRetrieveResponses = {
+export type V3HomeCoursesRetrieveLegacyResponses = {
   200: CourseHomeTab;
 };
 
-export type V3HomeCoursesRetrieveResponse =
-  V3HomeCoursesRetrieveResponses[keyof V3HomeCoursesRetrieveResponses];
+export type V3HomeCoursesRetrieveLegacyResponse =
+  V3HomeCoursesRetrieveLegacyResponses[keyof V3HomeCoursesRetrieveLegacyResponses];
 
-export type V3HomeLibrariesRetrieveData = {
+export type V3HomeLibrariesRetrieveLegacyData = {
   body?: never;
   path?: never;
   query?: {
@@ -1088,22 +2175,22 @@ export type V3HomeLibrariesRetrieveData = {
      */
     org?: string;
   };
-  url: "/v3/home/libraries/";
+  url: "/api/contentstore/v3/home/libraries/";
 };
 
-export type V3HomeLibrariesRetrieveErrors = {
+export type V3HomeLibrariesRetrieveLegacyErrors = {
   /**
    * The requester is not authenticated.
    */
   401: unknown;
 };
 
-export type V3HomeLibrariesRetrieveResponses = {
+export type V3HomeLibrariesRetrieveLegacyResponses = {
   200: LibraryTab;
 };
 
-export type V3HomeLibrariesRetrieveResponse =
-  V3HomeLibrariesRetrieveResponses[keyof V3HomeLibrariesRetrieveResponses];
+export type V3HomeLibrariesRetrieveLegacyResponse =
+  V3HomeLibrariesRetrieveLegacyResponses[keyof V3HomeLibrariesRetrieveLegacyResponses];
 
 export type V4HomeCoursesRetrieveData = {
   body?: never;
@@ -1144,7 +2231,7 @@ export type V4HomeCoursesRetrieveData = {
      */
     search?: string;
   };
-  url: "/v4/home/courses/";
+  url: "/api/contentstore/v4/home/courses/";
 };
 
 export type V4HomeCoursesRetrieveErrors = {
@@ -1201,6 +2288,44 @@ export type ApiEnrollmentV2CourseRetrieveResponses = {
 
 export type ApiEnrollmentV2CourseRetrieveResponse =
   ApiEnrollmentV2CourseRetrieveResponses[keyof ApiEnrollmentV2CourseRetrieveResponses];
+
+export type ApiEnrollmentV2CoursesRetrieveData = {
+  body?: never;
+  path: {
+    /**
+     * Course ID (e.g. course-v1:org+course+run).
+     */
+    course_id: string;
+  };
+  query?: {
+    /**
+     * If '1', include expired enrollment modes in the response.
+     */
+    include_expired?: string;
+  };
+  url: "/api/enrollment/v2/courses/{course_id}/";
+};
+
+export type ApiEnrollmentV2CoursesRetrieveErrors = {
+  /**
+   * Invalid request data or parameters.
+   */
+  400: unknown;
+  /**
+   * The requested resource does not exist.
+   */
+  404: unknown;
+};
+
+export type ApiEnrollmentV2CoursesRetrieveResponses = {
+  /**
+   * Course enrollment details retrieved successfully.
+   */
+  200: EnrollmentCourse;
+};
+
+export type ApiEnrollmentV2CoursesRetrieveResponse =
+  ApiEnrollmentV2CoursesRetrieveResponses[keyof ApiEnrollmentV2CoursesRetrieveResponses];
 
 export type ApiEnrollmentV2EnrollmentListData = {
   body?: never;
@@ -1526,6 +2651,79 @@ export type ApiEnrollmentV2EnrollmentUnenrollCreateResponses = {
 export type ApiEnrollmentV2EnrollmentUnenrollCreateResponse =
   ApiEnrollmentV2EnrollmentUnenrollCreateResponses[keyof ApiEnrollmentV2EnrollmentUnenrollCreateResponses];
 
+export type ApiEnrollmentV2EnrollmentsListLegacyData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Deprecated alias for 'course_key' (ADR 0033). Use 'course_key' instead.
+     *
+     * @deprecated
+     */
+    course_id?: string;
+    /**
+     * Deprecated alias for 'course_keys' (ADR 0033). Use 'course_keys' instead.
+     *
+     * @deprecated
+     */
+    course_ids?: string;
+    /**
+     * Filter to enrollments for this course (OEP-68).
+     */
+    course_key?: string;
+    /**
+     * Comma-separated list of course keys (OEP-68).
+     */
+    course_keys?: string;
+    /**
+     * Comma-separated list of emails.
+     */
+    email?: string;
+    /**
+     * Order results by one of: created, -created, id, -id (ADR 0033 §3).
+     */
+    ordering?: string;
+    /**
+     * Page number to retrieve. Default 1.
+     */
+    page?: string;
+    /**
+     * Items per page (default 10, max 100).
+     */
+    page_size?: string;
+    /**
+     * Comma-separated list of usernames.
+     */
+    username?: string;
+  };
+  url: "/api/enrollment/v2/enrollments";
+};
+
+export type ApiEnrollmentV2EnrollmentsListLegacyErrors = {
+  /**
+   * Invalid request data or parameters.
+   */
+  400: unknown;
+  /**
+   * The requester is not authenticated.
+   */
+  401: unknown;
+  /**
+   * The requester does not have permission for this operation.
+   */
+  403: unknown;
+};
+
+export type ApiEnrollmentV2EnrollmentsListLegacyResponses = {
+  /**
+   * Paginated list of course enrollments.
+   */
+  200: PaginatedCourseEnrollmentsApiListList;
+};
+
+export type ApiEnrollmentV2EnrollmentsListLegacyResponse =
+  ApiEnrollmentV2EnrollmentsListLegacyResponses[keyof ApiEnrollmentV2EnrollmentsListLegacyResponses];
+
 export type ApiEnrollmentV2EnrollmentsListData = {
   body?: never;
   path?: never;
@@ -1593,11 +2791,48 @@ export type ApiEnrollmentV2EnrollmentsListResponses = {
   /**
    * Paginated list of course enrollments.
    */
-  200: PaginatedCourseEnrollmentList;
+  200: PaginatedCourseEnrollmentsApiListList;
 };
 
 export type ApiEnrollmentV2EnrollmentsListResponse =
   ApiEnrollmentV2EnrollmentsListResponses[keyof ApiEnrollmentV2EnrollmentsListResponses];
+
+export type ApiEnrollmentV2EnrollmentsRetrieveData = {
+  body?: never;
+  path: {
+    /**
+     * Course ID (e.g. course-v1:org+course+run).
+     */
+    course_id: string;
+    /**
+     * Username of the user.
+     */
+    username: string;
+  };
+  query?: never;
+  url: "/api/enrollment/v2/enrollments/{username},{course_id}/";
+};
+
+export type ApiEnrollmentV2EnrollmentsRetrieveErrors = {
+  /**
+   * Invalid request data or parameters.
+   */
+  400: unknown;
+  /**
+   * The requested resource does not exist.
+   */
+  404: unknown;
+};
+
+export type ApiEnrollmentV2EnrollmentsRetrieveResponses = {
+  /**
+   * Enrollment retrieved successfully (or empty body if no enrollment).
+   */
+  200: CourseEnrollment;
+};
+
+export type ApiEnrollmentV2EnrollmentsRetrieveResponse =
+  ApiEnrollmentV2EnrollmentsRetrieveResponses[keyof ApiEnrollmentV2EnrollmentsRetrieveResponses];
 
 export type ApiEnrollmentV2RolesRetrieveData = {
   body?: never;
