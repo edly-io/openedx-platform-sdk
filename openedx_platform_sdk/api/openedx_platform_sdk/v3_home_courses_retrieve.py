@@ -22,7 +22,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/contentstore/v3/home/courses/",
+        "url": "/api/authoring/v3/home/courses/",
         "params": params,
     }
 
